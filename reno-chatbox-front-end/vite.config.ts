@@ -1,21 +1,35 @@
+// TODO: Vue3相关
+import vue from '@vitejs/plugin-vue'
+import vueDevTools from 'vite-plugin-vue-devtools'
+import path from 'path'
+import { defineConfig } from 'vite'
 import { fileURLToPath, URL } from 'node:url'
 
-import { defineConfig } from 'vite'
+// TODO: SVG图标
+import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
+
+// TODO: element-plus自动按需引入
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
-import vue from '@vitejs/plugin-vue'
-import vueDevTools from 'vite-plugin-vue-devtools'
 
-// https://vite.dev/config/
+// TODO: 检查插件转换
+import Inspect from 'vite-plugin-inspect'
+
+
 export default defineConfig({
   plugins: [
     vue(),
     vueDevTools(),
+    // TODO: SVG图标
+    createSvgIconsPlugin({
+      iconDirs: [path.resolve(process.cwd(), 'src/assets/svg')],
+      symbolId: 'icon-[dir]-[name]',
+    }),
     // TODO: element-plus自动按需引入
     AutoImport({
       resolvers: [
-        ElementPlusResolver()
+        ElementPlusResolver(),
       ],
       dts: 'src/auto-imports.d.ts',
       imports: ['vue', 'vue-router', 'pinia'], // 自动导入 Vue/VueRouter/Pinia API
@@ -24,9 +38,7 @@ export default defineConfig({
       }
     }),
     Components({
-      // allow auto load markdown components under `./src/components/`
       extensions: ['vue', 'md'],
-      // allow auto import and register components used in markdown
       include: [/\.vue$/, /\.vue\?vue/, /\.md$/],
       resolvers: [
         ElementPlusResolver({
@@ -36,16 +48,12 @@ export default defineConfig({
       ],
       dts: 'src/components.d.ts',
     }),
+    // TODO: 检查插件转换
+    Inspect(),
   ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
-      '@components': fileURLToPath(new URL('./src/components', import.meta.url)),
-      '@views': fileURLToPath(new URL('./src/views', import.meta.url)),
-      '@hooks': fileURLToPath(new URL('./src/hooks', import.meta.url)),
-      '@utils': fileURLToPath(new URL('./src/utils', import.meta.url)),
-      '@types': fileURLToPath(new URL('./src/types', import.meta.url)),
-      '@stores': fileURLToPath(new URL('./src/stores', import.meta.url)),
     },
   },
 })
