@@ -20,6 +20,7 @@ export const useRequest = <T = any>(apiPromiseFunc: (...args: any[]) => Promise<
   /**
    * 执行请求
    * @param args - 传给接口的参数
+   * @returns res - 解构出来的结果
    */
   const run = async (...args: any[]): Promise<T> => {
     loading.value = true

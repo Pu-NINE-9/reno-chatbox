@@ -39,18 +39,47 @@ export const useECharts = (
     { deep: true }
   )
 
+  // 监听 DOM 元素变化
+  watch(
+    () => unref(elRef),
+    (newEl) => {
+      if (newEl) {
+        initChart()
+        if (autoResize) {
+          resizeObserver?.disconnect()
+          resizeObserver = new ResizeObserver(resize)
+          resizeObserver.observe(newEl)
+        }
+      }
+    },
+    { immediate: true }
+  )
+
   // 窗口变化重绘
   const resize = () => chart.value?.resize()
+
+  // 监听元素尺寸变化
+  let resizeObserver: ResizeObserver | null = null // 监听DOM元素自身大小变化，当DOM变化时图表大小自动跟着变化
 
   // TODO: 组件挂载
   onMounted(() => {
     initChart()
-    if (autoResize) window.addEventListener('resize', resize)
+    if (autoResize) {
+      window.addEventListener('resize', resize)
+      const dom = unref(elRef)
+      if (dom) {
+        resizeObserver = new ResizeObserver(resize)
+        resizeObserver.observe(dom)
+      }
+    }
   })
 
   // TODO: 组件卸载
   onUnmounted(() => {
-    if (autoResize) window.removeEventListener('resize', resize)
+    if (autoResize) {
+      window.removeEventListener('resize', resize)
+      resizeObserver?.disconnect()
+    }
     chart.value?.dispose()
     chart.value = null
   })

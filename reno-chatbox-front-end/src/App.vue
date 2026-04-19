@@ -4,7 +4,6 @@ import layout from './layout/index.vue'
 
 <template>
   <div>
-    <el-icon color="#409efc" :size="20"><House /></el-icon>
     <layout />
   </div>
 </template>
