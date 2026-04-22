@@ -17,6 +17,9 @@
     <!-- 切换语言按钮 -->
     <el-button @click="switchLang('zh-CN')">简体中文</el-button>
     <el-button @click="switchLang('en')">English</el-button>
+    <router-link to="/error">error</router-link>
+    <router-link to="/history">history</router-link>
+    <router-link to="/chat">chat</router-link>
   </div>
 </template>
 
