@@ -5,12 +5,12 @@ import router from '@/router/index.js' // 引入 router
 import { ElMessage, ElLoading } from 'element-plus' // elementplus的错误提示
 
 // TODO: 基础准备
-let loadingInstance // 请求的实例
+let loadingInstance: ReturnType<typeof ElLoading.service> | null = null
 let requestCount = 0 // 请求的次数
 const pendingMap = new Map() // 存储每个请求的取消函数
 
 // TODO: 生成请求的唯一标识（根据方法、url、参数、data）
-const getRequestKey = (config):string => {
+const getRequestKey = (config: any): string => {
   const { method, url, params, data } = config // 解构出数据
   return [method, url, params, JSON.stringify(data)].join('&') // 合并成一个唯一标识的字符串
 }

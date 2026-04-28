@@ -11,7 +11,7 @@ import { useECharts, useRequest } from '@/hooks'
 import { getDataAPI } from '@/api'
 import type { EChartsOption } from '@/utils'
 
-const myChart = ref<HTMLElement>()
+const myChart = ref<HTMLElement | null>(null)
 const options: EChartsOption = {
   title: {
     text: '测试折线图',

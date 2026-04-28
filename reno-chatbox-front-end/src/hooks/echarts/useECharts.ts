@@ -5,15 +5,15 @@ import type { EChartsOption, ECharts } from '@/utils/echarts'
  * ECharts 图表 Hook
  * 自动初始化、响应式更新配置、自动销毁、窗口自适应
  *
- * @param elRef - 图表挂载的 DOM 引用
- * @param option - 图表配置项
- * @param autoResize - 是否自动跟随窗口大小变化
+ * @param {HTMLElement} elRef - 图表挂载的 DOM 引用
+ * @param {Object} option - 图表配置项
+ * @param {Boolean} autoResize - 是否自动跟随窗口大小变化
  * @returns 图表实例 & 手动更新方法
  * @returns chart - ECharts 实例
  * @returns updateOption - 手动更新配置
  */
 export const useECharts = (
-  elRef: HTMLElement | null | undefined,
+  elRef: Ref<HTMLElement | null> | HTMLElement | null | undefined,
   option: EChartsOption,
   autoResize = true
 ) => {
