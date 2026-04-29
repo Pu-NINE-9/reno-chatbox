@@ -1,69 +1,66 @@
 <script setup lang="ts">
+import { ref, computed } from 'vue'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import en from 'element-plus/es/locale/lang/en'
 import { useI18n } from 'vue-i18n'
+import SideBar from '@/components/sideBar/index.vue'
 
-// TODO: 国际化处理
 const { locale } = useI18n()
-const elLocale = computed(() => locale.value === 'zh-CN' ? zhCn : en)
+const elLocale = computed(() => (locale.value === 'zh-CN' ? zhCn : en))
 
-import { useECharts, useRequest } from '@/hooks'
-import { getDataAPI } from '@/api'
-import type { EChartsOption } from '@/utils'
+const isSidebarHidden = ref(false)
 
-const myChart = ref<HTMLElement | null>(null)
-const options: EChartsOption = {
-  title: {
-    text: '测试折线图',
-  },
-  xAxis: {
-    type: 'category',
-    data: ['周一', '周二', '周三', '周四', '周五'],
-  },
-  yAxis: {
-    type: 'value',
-  },
-  series: [
-    {
-      name: '销量',
-      type: 'line',
-      data: [10, 20, 30, 40, 50],
-    },
-  ],
-}
-useECharts(myChart, options)
-
-const { data, run: getProverb, error } = useRequest(getDataAPI)
-
-const handleClick = async () => {
-  try {
-    await getProverb()
-    console.log('click后：', data.value)
-  } catch (err) {
-    console.log(error.value)
-  }
+const toggleSidebar = () => {
+  isSidebarHidden.value = !isSidebarHidden.value
 }
 </script>
 
 <template>
   <el-config-provider :locale="elLocale">
-    <!-- 整体架子 -->
-    <div class="h-screen w-full">
-      <el-row :span="24" class="h-full">
-        <el-col :span="4" class="bg-red-100 h-full">
-          <div>历史信息栏</div>
-          <svgIcon name="cow" :width="`26px`" :height="`26px`" color="red" />
-        </el-col>
-        <el-col :span="20" class="h-full">
-          <div @click="handleClick">对话区域</div>
-          <div ref="myChart" style="height: 400px; width: 400px"></div>
-          <!-- 路由出口 -->
-            <router-view />
-        </el-col>
-      </el-row>
+    <div class="flex h-screen bg-[var(--bg-color)]">
+      <!-- 侧导航栏 -->
+      <transition name="slide">
+        <SideBar v-show="!isSidebarHidden" @hide="toggleSidebar" />
+      </transition>
+
+      <!-- 还原侧导航栏按钮 -->
+      <button
+        v-show="isSidebarHidden"
+        @click="toggleSidebar"
+        class="fixed left-0 top-1/2 -translate-y-1/2 z-50 p-2 bg-[var(--bg-card)] border border-r-0 border-[var(--border-color)] rounded-r-lg hover:bg-[var(--border-color)]/50 transition-colors"
+      >
+        <svg
+          class="w-5 h-5 text-[var(--text-secondary)]"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15 19l-7-7 7-7"
+          />
+        </svg>
+      </button>
+
+      <!-- 主内容区 -->
+      <main class="flex-1 overflow-hidden">
+        <router-view />
+      </main>
     </div>
   </el-config-provider>
 </template>
 
 <style lang="scss" scoped>
+.slide-enter-active,
+.slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+  opacity: 0;
+  transform: translateX(-100%);
+}
 </style>

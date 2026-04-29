@@ -1,0 +1,31 @@
+$primary-color: #{$theme-primary};
+$primary-light: #{$theme-primary-light};
+$primary-dark: #{$theme-primary-dark};
+$bg-color: #{$theme-bg};
+$bg-sidebar: #{$theme-bg-sidebar};
+$bg-card: #{$theme-bg-card};
+$text-color: #{$theme-text};
+$text-secondary: #{$theme-text-secondary};
+$border-color: #{$theme-border};
+$success-color: #{$theme-success};
+$warning-color: #{$theme-warning};
+$error-color: #{$theme-error};
+
+@mixin theme-colors {
+  --primary-color: #{$primary-color};
+  --primary-light: #{$primary-light};
+  --primary-dark: #{$primary-dark};
+  --bg-color: #{$bg-color};
+  --bg-sidebar: #{$bg-sidebar};
+  --bg-card: #{$bg-card};
+  --text-color: #{$text-color};
+  --text-secondary: #{$text-secondary};
+  --border-color: #{$border-color};
+  --success-color: #{$success-color};
+  --warning-color: #{$warning-color};
+  --error-color: #{$error-color};
+}
+
+:root {
+  @include theme-colors;
+}

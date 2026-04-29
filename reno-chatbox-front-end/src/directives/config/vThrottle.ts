@@ -19,10 +19,9 @@
  */
 import type { Directive } from 'vue'
 import { throttle } from 'lodash'
-import type { ThrottledFunc } from 'lodash'
 
 // 缓存每个DOM对应的节流函数，组件卸载时清理，防止内存泄漏
-const throttleMap = new WeakMap<HTMLElement, ThrottledFunc<(...args: any[]) => void>>()
+const throttleMap = new WeakMap<HTMLElement, ReturnType<typeof throttle>>()
 
 const vThrottle: Directive = {
   mounted(el, binding) {
