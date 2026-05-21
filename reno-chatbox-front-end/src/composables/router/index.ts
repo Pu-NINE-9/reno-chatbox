@@ -57,7 +57,7 @@ export const getRouteConfig = (): RouteRecordRaw[] => {
   const routes = Object.values(routeMap)
 
   // 根重定向
-  routes.unshift({ path: '/', redirect: '/dashboard' })
+  routes.unshift({ path: '/', redirect: '/chat' })
 
   return routes
 }

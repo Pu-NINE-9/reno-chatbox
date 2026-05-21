@@ -19,6 +19,15 @@ import Inspect from 'vite-plugin-inspect'
 
 export default defineConfig({
   base: './',
+  server: {
+    proxy: {
+      '/v1': {
+        target: 'http://localhost',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
   plugins: [
     vue(),
     vueDevTools(),

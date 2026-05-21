@@ -40,9 +40,8 @@ const hideLoading = ():void => {
 
 // TODO: 创建实例
 const instance = axios.create({
-  // TODO.1 基地址、超时时间
-  baseURL: 'https://api.apiopen.top',
-  timeout: 10000
+  baseURL: import.meta.env.VITE_API_URL,
+  timeout: 60000
 })
 
 // TODO: 错误后重试（利用第三方库axios-retry）
@@ -62,10 +61,10 @@ axiosRetry(instance, {
 // TODO: 添加请求拦截器
 instance.interceptors.request.use(
   function (config) {
-    // config 是请求配置对象
-
-    // 展示loading效果
     showLoading()
+
+    // 添加 API Key
+    config.headers['x-api-key'] = import.meta.env.VITE_API_KEY
 
     // 处理重复请求
     const key = getRequestKey(config) // 得到标识
@@ -93,16 +92,16 @@ instance.interceptors.response.use(
     const key = getRequestKey(response.config)
     pendingMap.delete(key)
 
-    if (response.data?.code === 200 || response.data?.status === 0) return response.data.data
-    // TODO.4 处理业务失败
-    ElMessage.error(response.data.message || '服务失败')
-    return Promise.reject(response.data) // 处理失败
+    if (response.data?.success === true) return response.data.data
+    if (response.data?.success === false) {
+      ElMessage.error(response.data.error || '服务失败')
+      return Promise.reject(response.data)
+    }
+    return response.data
   },
   function (error) {
-    // 关闭弹窗
     hideLoading()
 
-    // 如果是手动取消的请求，不弹出错误提示
     if (axios.isCancel(error)) {
       console.log('请求取消', error.message)
       return Promise.reject(error); // 注意这里要 reject，但不要触发错误弹窗
@@ -114,12 +113,14 @@ instance.interceptors.response.use(
       pendingMap.delete(key)
     }
 
-    // TODO.5 处理401错误
-    if (error.response?.status === 401) router.push('/login') // 错误的特殊情况 => 401：权限不足 或 token 过期 => 拦截到登录
+    if (error.response?.status === 401) {
+      ElMessage.error('未授权，请重新登录')
+    } else if (error.response?.status === 403) {
+      ElMessage.error('API 密钥无效')
+    }
 
-    // 错误的默认情况 => 只要给提示就行
     ElMessage.error(
-      error.response?.data?.message || error.message || '服务失败'
+      error.response?.data?.error || error.message || '服务失败'
     )
     return Promise.reject(error)
   }
