@@ -202,7 +202,7 @@ export const useChatStore = defineStore('chat', () => {
       const formData = new FormData()
       formData.append('file', file)
 
-      const response = await ragAPI.uploadFile(formData)
+      const response = await ragAPI.uploadFile(formData) as unknown as { fileName: string; chunkCount: number }
       return { success: true, message: `文件上传成功：${response.fileName}，已分成 ${response.chunkCount} 个片段` }
     } catch (error) {
       console.error('文件上传失败:', error)
@@ -212,7 +212,7 @@ export const useChatStore = defineStore('chat', () => {
 
   const listRagFiles = async () => {
     try {
-      return await ragAPI.listFiles()
+      return await ragAPI.listFiles() as unknown as Array<{ id: string; fileName: string; fileSize: number; uploadTime: string }>
     } catch (error) {
       console.error('获取文件列表失败:', error)
       return []

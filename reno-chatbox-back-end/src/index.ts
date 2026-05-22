@@ -11,6 +11,7 @@ import { requestLogger } from './middleware/requestLogger';
 import { validateApiKey } from './middleware/validateApiKey';
 import { inputSanitizer, requestSizeLimiter } from './middleware/security';
 import { cacheMiddleware } from './middleware/performance';
+import { decryptRequest } from './middleware/decryptRequest';
 
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
@@ -32,16 +33,27 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
+const corsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // 允许所有 localhost 来源（开发环境）
+    if (!origin || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Request-ID'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Request-ID', 'X-Encrypted'],
   maxAge: 86400,
-}));
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+app.use(decryptRequest);
 
 app.use(requestSizeLimiter('50mb'));
 app.use(inputSanitizer);

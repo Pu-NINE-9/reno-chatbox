@@ -1,6 +1,5 @@
 import { ChatDeepSeek } from '@langchain/deepseek';
 import { StringOutputParser } from '@langchain/core/output_parsers';
-import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { logger } from '../utils/logger';
 
 let model: ChatDeepSeek | null = null;
@@ -51,19 +50,20 @@ export interface ChatResponse {
   };
 }
 
+const defaultSystemPrompt = `你是一个专业的编程助手。请使用 Markdown 格式回答问题。
+
+当输出代码时，请使用代码块格式，例如：
+\`\`\`c
+#include <stdio.h>
+int main() {
+    printf("Hello, World!\\n");
+    return 0;
+}
+\`\`\`
+
+请确保代码块包含正确的语言标识，并且代码格式正确。`;
+
 class ChatService {
-  private createPrompt(messages: ChatMessage[]) {
-    const systemMessage = messages.find(m => m.role === 'system');
-    const chatHistory = messages.filter(m => m.role !== 'system');
-
-    const prompt = ChatPromptTemplate.fromMessages([
-      ...(systemMessage ? [{ role: 'system', content: systemMessage.content }] : []),
-      ...chatHistory.map(m => ({ role: m.role, content: m.content })),
-    ]);
-
-    return prompt;
-  }
-
   async chat(request: ChatRequest): Promise<ChatResponse> {
     const { messages, temperature = 0.7, maxTokens = 4096 } = request;
 
@@ -73,8 +73,18 @@ class ChatService {
         max_tokens: maxTokens,
       });
 
-      const chain = this.createPrompt(messages).pipe(modelWithConfig).pipe(stringOutputParser);
-      const content = await chain.invoke({});
+      // 构建消息列表
+      const systemMessage = messages.find(m => m.role === 'system');
+      const chatHistory = messages.filter(m => m.role !== 'system');
+
+      const formattedMessages = [
+        { role: 'system' as const, content: systemMessage?.content || defaultSystemPrompt },
+        ...chatHistory.map(m => ({ role: m.role, content: m.content })),
+      ];
+
+      // 使用 LCEL 管道，直接传入消息数组
+      const chain = modelWithConfig.pipe(stringOutputParser);
+      const content = await chain.invoke(formattedMessages);
 
       return {
         content,

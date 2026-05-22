@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { marked } from 'marked'
 import { markedHighlight } from 'marked-highlight'
 import hljs from 'highlight.js'
@@ -7,8 +7,6 @@ import hljs from 'highlight.js'
 const props = defineProps<{
   content: string
 }>()
-
-const renderedContent = ref('')
 
 // 配置 marked 使用 highlight.js
 marked.use(
@@ -32,24 +30,17 @@ marked.setOptions({
   gfm: true,
 })
 
-const renderMarkdown = () => {
+const renderedContent = computed(() => {
   if (!props.content) {
-    renderedContent.value = ''
-    return
+    return ''
   }
-  renderedContent.value = marked(props.content) as string
-}
-
-onMounted(() => {
-  renderMarkdown()
+  try {
+    return marked(props.content) as string
+  } catch (error) {
+    console.error('Markdown 渲染错误:', error)
+    return props.content
+  }
 })
-
-watch(
-  () => props.content,
-  () => {
-    renderMarkdown()
-  },
-)
 </script>
 
 <template>
@@ -184,6 +175,33 @@ watch(
 }
 
 /* highlight.js 代码高亮样式覆盖 */
+.markdown-content pre {
+  background-color: #1e1e1e !important;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 0.75rem 0;
+  border: 1px solid var(--border-color);
+}
+
+.markdown-content pre code {
+  background-color: transparent !important;
+  padding: 0 !important;
+  font-family: 'Fira Code', 'Monaco', 'Consolas', 'Menlo', monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: #d4d4d4;
+}
+
+.markdown-content code {
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+  font-size: 0.875rem;
+  color: #d4d4d4;
+}
+
 .markdown-content .hljs {
   background: transparent !important;
   padding: 0 !important;
@@ -194,7 +212,7 @@ watch(
 .markdown-content .hljs-built_in,
 .markdown-content .hljs-name,
 .markdown-content .hljs-tag {
-  color: #c678dd;
+  color: #569cd6;
 }
 
 .markdown-content .hljs-string,
@@ -206,14 +224,15 @@ watch(
 .markdown-content .hljs-template-variable,
 .markdown-content .hljs-type,
 .markdown-content .hljs-addition {
-  color: #98c379;
+  color: #ce9178;
 }
 
 .markdown-content .hljs-comment,
 .markdown-content .hljs-quote,
 .markdown-content .hljs-deletion,
 .markdown-content .hljs-meta {
-  color: #5c6370;
+  color: #6a9955;
+  font-style: italic;
 }
 
 .markdown-content .hljs-number,
@@ -221,6 +240,21 @@ watch(
 .markdown-content .hljs-literal,
 .markdown-content .hljs-bullet,
 .markdown-content .hljs-link {
-  color: #d19a66;
+  color: #b5cea8;
+}
+
+.markdown-content .hljs-function,
+.markdown-content .hljs-title.function_ {
+  color: #dcdcaa;
+}
+
+.markdown-content .hljs-variable,
+.markdown-content .hljs-params {
+  color: #9cdcfe;
+}
+
+.markdown-content .hljs-class .hljs-title,
+.markdown-content .hljs-type {
+  color: #4ec9b0;
 }
 </style>

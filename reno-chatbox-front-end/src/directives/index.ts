@@ -29,7 +29,6 @@ export function setupDirectives(app: App) {
       .replace(/^-/, '') // 去掉开头的 -
 
     // 全局注册
-    console.log(directiveName, directive)
     app.directive(directiveName, directive)
   })
 }

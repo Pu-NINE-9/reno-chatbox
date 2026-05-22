@@ -1,8 +1,9 @@
-// TODO: Axios 实力配置
+// TODO: Axios 实例配置
 import axios, { type AxiosResponse } from 'axios'
 import axiosRetry from 'axios-retry' // TODO: 引入错误重试
 import router from '@/router/index.js' // 引入 router
 import { ElMessage, ElLoading } from 'element-plus' // elementplus的错误提示
+import { encryptRequest } from '@/utils/crypto'
 
 // TODO: 基础准备
 let loadingInstance: ReturnType<typeof ElLoading.service> | null = null
@@ -16,8 +17,7 @@ const getRequestKey = (config: any): string => {
 }
 
 // TODO: 处理请求时的loading效果
-// 显示loading
-const showLoading = ():void => {
+const showLoading = (): void => {
   if (requestCount === 0) {
     // 配置elloading实例
     loadingInstance = ElLoading.service({
@@ -29,8 +29,7 @@ const showLoading = ():void => {
   requestCount++
 }
 
-// 隐藏loading
-const hideLoading = ():void => {
+const hideLoading = (): void => {
   requestCount--
   if (requestCount === 0 && loadingInstance) {
     loadingInstance.close() // 关闭弹窗
@@ -44,11 +43,10 @@ const instance = axios.create({
   timeout: 60000
 })
 
-// TODO: 错误后重试（利用第三方库axios-retry）
+// TODO: 错误后重试
 axiosRetry(instance, {
   retries: 3, // 最大重试次数
   retryDelay: (retryCount) => {
-    console.log('网络错误，正在重试...')
     if (retryCount == 1) ElMessage.warning('网络不稳定，正在重新连接中...')
     return retryCount * 1000 // 重试延迟，1s到3秒
   },
@@ -63,15 +61,28 @@ instance.interceptors.request.use(
   function (config) {
     showLoading()
 
-    // 添加 API Key
-    config.headers['x-api-key'] = import.meta.env.VITE_API_KEY
+    // 加密 API Key（使用 Base64 编码）
+    const apiKey = import.meta.env.VITE_API_KEY
+    if (apiKey) {
+      config.headers['x-api-key'] = btoa(apiKey) // Base64 编码
+    }
+
+    // 加密请求体（除了流式请求和文件上传）
+    if (config.data && !config.url?.includes('/stream') && !(config.data instanceof FormData)) {
+      try {
+        const encrypted = encryptRequest(config.data)
+        config.data = encrypted
+      } catch (error) {
+        console.error('请求加密失败:', error)
+      }
+    }
 
     // 处理重复请求
     const key = getRequestKey(config) // 得到标识
     // 如果有相同的请求正在进行就取消（第一次不会执行）
     if (pendingMap.has(key)) {
       const cancel = pendingMap.get(key)
-      cancel('取消重复请求') // cancel是一个函数，属于Axios，用于取消正在进行的请求
+      cancel('取消重复请求')
       pendingMap.delete(key)
     }
 
@@ -103,7 +114,6 @@ instance.interceptors.response.use(
     hideLoading()
 
     if (axios.isCancel(error)) {
-      console.log('请求取消', error.message)
       return Promise.reject(error); // 注意这里要 reject，但不要触发错误弹窗
     }
 

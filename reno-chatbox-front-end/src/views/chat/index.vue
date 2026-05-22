@@ -1,165 +1,153 @@
-<script setup lang="ts">
-import { ref, nextTick, onMounted, computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { useChatStore } from '@/stores/chat'
-import type { ChatMessage } from '@/types'
-import MarkdownRenderer from '@/components/markdown/MarkdownRenderer.vue'
-
-const { t } = useI18n()
-const chatStore = useChatStore()
-
-const ALLOWED_EXTENSIONS = ['pdf', 'doc', 'docx', 'txt', 'md', 'csv']
-const MAX_FILE_SIZE = 50 * 1024 * 1024
-
-const isDragging = ref(false)
-const inputMessage = ref('')
-const messagesContainer = ref<HTMLElement | null>(null)
-const showFileUploadModal = ref(false)
-const ragFiles = ref<{ id: string; fileName: string; fileSize: number; uploadTime: string }[]>([])
-
-const messages = computed(() => chatStore.currentMessages)
-const isLoading = computed(() => chatStore.isLoading)
-const ragEnabled = computed(() => chatStore.useRag)
-
+<script setup lang="ts">import { ref, nextTick, onMounted, computed, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useChatStore } from '@/stores/chat';
+import type { ChatMessage } from '@/types';
+import MarkdownRenderer from '@/components/markdown/MarkdownRenderer.vue';
+const { t } = useI18n();
+const chatStore = useChatStore();
+const ALLOWED_EXTENSIONS = ['pdf', 'doc', 'docx', 'txt', 'md', 'csv'];
+const MAX_FILE_SIZE = 50 * 1024 * 1024;
+const isDragging = ref(false);
+const inputMessage = ref('');
+const messagesContainer = ref<HTMLElement | null>(null);
+const showFileUploadModal = ref(false);
+const ragFiles = ref<{
+ id: string;
+ fileName: string;
+ fileSize: number;
+ uploadTime: string;
+}[]>([]);
+const messages = computed(() => chatStore.currentMessages);
+const isLoading = computed(() => chatStore.isLoading);
+const ragEnabled = computed(() => chatStore.useRag);
 const scrollToBottom = async () => {
-  await nextTick()
-  if (messagesContainer.value) {
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
-  }
-}
-
+ await nextTick();
+ if (messagesContainer.value) {
+ messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+ }
+};
 const sendMessage = async () => {
-  if (!inputMessage.value.trim() || isLoading.value) return
-
-  if (!chatStore.currentConversationId) {
-    chatStore.createNewConversation()
-  }
-
-  const queryText = inputMessage.value.trim()
-  inputMessage.value = ''
-
-  await chatStore.sendMessage(queryText)
-  await scrollToBottom()
-}
-
+ if (!inputMessage.value.trim() || isLoading.value)
+ return;
+ if (!chatStore.currentConversationId) {
+ chatStore.createNewConversation();
+ }
+ const queryText = inputMessage.value.trim();
+ inputMessage.value = '';
+ await chatStore.sendMessage(queryText);
+ await scrollToBottom();
+};
 const handleSuggestion = (text: string) => {
-  inputMessage.value = text
-}
-
+ inputMessage.value = text;
+};
 const isFileTypeAllowed = (file: File): boolean => {
-  const extension = file.name.split('.').pop()?.toLowerCase()
-  return extension ? ALLOWED_EXTENSIONS.includes(extension) : false
-}
-
+ const extension = file.name.split('.').pop()?.toLowerCase();
+ return extension ? ALLOWED_EXTENSIONS.includes(extension) : false;
+};
 const isFileSizeAllowed = (file: File): boolean => {
-  return file.size <= MAX_FILE_SIZE
-}
-
+ return file.size <= MAX_FILE_SIZE;
+};
 const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-}
-
+ if (bytes === 0)
+ return '0 B';
+ const k = 1024;
+ const sizes = ['B', 'KB', 'MB', 'GB'];
+ const i = Math.floor(Math.log(bytes) / Math.log(k));
+ return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
 const handleDragEnter = (e: DragEvent) => {
-  e.preventDefault()
-  e.stopPropagation()
-  isDragging.value = true
-}
-
+ e.preventDefault();
+ e.stopPropagation();
+ isDragging.value = true;
+};
 const handleDragLeave = (e: DragEvent) => {
-  e.preventDefault()
-  e.stopPropagation()
-  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-  if (
-    e.clientX <= rect.left ||
-    e.clientX >= rect.right ||
-    e.clientY <= rect.top ||
-    e.clientY >= rect.bottom
-  ) {
-    isDragging.value = false
-  }
-}
-
+ e.preventDefault();
+ e.stopPropagation();
+ const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+ if (e.clientX <= rect.left ||
+ e.clientX >= rect.right ||
+ e.clientY <= rect.top ||
+ e.clientY >= rect.bottom) {
+ isDragging.value = false;
+ }
+};
 const handleDragOver = (e: DragEvent) => {
-  e.preventDefault()
-  e.stopPropagation()
-}
-
+ e.preventDefault();
+ e.stopPropagation();
+};
 const handleDrop = async (e: DragEvent) => {
-  e.preventDefault()
-  e.stopPropagation()
-  isDragging.value = false
-
-  const files = e.dataTransfer?.files
-  if (!files || files.length === 0) return
-
-  for (let i = 0; i < files.length; i++) {
-    const file = files.item(i)
-    if (!file) continue
-
-    if (!isFileTypeAllowed(file)) {
-      alert(`文件 "${file.name}" 类型不允许！\n允许的类型: ${ALLOWED_EXTENSIONS.join(', ')}`)
-      continue
-    }
-
-    if (!isFileSizeAllowed(file)) {
-      alert(
-        `文件 "${file.name}" 超过大小限制！\n最大允许: ${formatFileSize(MAX_FILE_SIZE)}，当前: ${formatFileSize(file.size)}`,
-      )
-      continue
-    }
-
-    await uploadFile(file)
-  }
-}
-
+ e.preventDefault();
+ e.stopPropagation();
+ isDragging.value = false;
+ const files = e.dataTransfer?.files;
+ if (!files || files.length === 0)
+ return;
+ for (let i = 0; i < files.length; i++) {
+ const file = files.item(i);
+ if (!file)
+ continue;
+ if (!isFileTypeAllowed(file)) {
+ alert(`文件 "${file.name}" 类型不允许！\n允许的类型: ${ALLOWED_EXTENSIONS.join(', ')}`);
+ continue;
+ }
+ if (!isFileSizeAllowed(file)) {
+ alert(`文件 "${file.name}" 超过大小限制！\n最大允许: ${formatFileSize(MAX_FILE_SIZE)}，当前: ${formatFileSize(file.size)}`);
+ continue;
+ }
+ await uploadFile(file);
+ }
+};
 const uploadFile = async (file: File) => {
-  const result = await chatStore.uploadFileToRag(file)
-  if (result.success) {
-    alert(result.message)
-    await loadRagFiles()
-  } else {
-    alert(result.message)
-  }
-}
-
+ const result = await chatStore.uploadFileToRag(file);
+ if (result.success) {
+ alert(result.message);
+ await loadRagFiles();
+ }
+ else {
+ alert(result.message);
+ }
+};
 const loadRagFiles = async () => {
-  ragFiles.value = await chatStore.listRagFiles()
-}
-
+ ragFiles.value = await chatStore.listRagFiles();
+};
 const deleteRagFile = async (fileId: string) => {
-  if (!confirm('确定要删除这个文件吗？')) return
-  const success = await chatStore.deleteRagFile(fileId)
-  if (success) {
-    await loadRagFiles()
-  }
-}
-
+ if (!confirm('确定要删除这个文件吗？'))
+ return;
+ const success = await chatStore.deleteRagFile(fileId);
+ if (success) {
+ await loadRagFiles();
+ }
+};
 const toggleRag = () => {
-  chatStore.toggleRag(!ragEnabled.value)
-}
-
+ chatStore.toggleRag(!ragEnabled.value);
+};
+const triggerFileUpload = () => {
+ const input = window.document.getElementById('file-upload') as HTMLInputElement;
+ if (input) {
+ input.click();
+ }
+};
+watch(() => messages.value.length, () => {
+ scrollToBottom();
+});
 onMounted(() => {
-  if (messages.value.length === 0) {
-    const welcomeMessage: ChatMessage = {
-      id: 'msg_welcome',
-      role: 'system',
-      content: t('chat.welcome'),
-      time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-      suggestions: [
-        { id: 1, text: t('chat.suggestion1') },
-        { id: 2, text: t('chat.suggestion2') },
-        { id: 3, text: t('chat.suggestion3') },
-        { id: 4, text: t('chat.suggestion4') },
-      ],
-    }
-    chatStore.addMessage(welcomeMessage)
-  }
-  scrollToBottom()
-})
+ if (messages.value.length === 0) {
+ const welcomeMessage: ChatMessage = {
+ id: 'msg_welcome',
+ role: 'system',
+ content: t('chat.welcome'),
+ time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+ suggestions: [
+ { id: 1, text: t('chat.suggestion1') },
+ { id: 2, text: t('chat.suggestion2') },
+ { id: 3, text: t('chat.suggestion3') },
+ { id: 4, text: t('chat.suggestion4') },
+ ],
+ };
+ chatStore.addMessage(welcomeMessage);
+ }
+ scrollToBottom();
+});
 </script>
 
 <template>
@@ -430,19 +418,6 @@ onMounted(() => {
             </svg>
           </button>
         </div>
-        <div class="flex items-center justify-center gap-4 mt-3">
-          <button
-            class="text-xs text-[var(--text-secondary)] hover:text-[var(--primary-color)] transition-colors"
-          >
-            {{ t('chat.quickWrite') }}
-          </button>
-          <span class="text-[var(--border-color)]">|</span>
-          <button
-            class="text-xs text-[var(--text-secondary)] hover:text-[var(--primary-color)] transition-colors"
-          >
-            {{ t('chat.continueWriting') }}
-          </button>
-        </div>
       </div>
     </div>
 
@@ -464,7 +439,7 @@ onMounted(() => {
             <p class="text-[var(--text-color)]">拖拽文件到这里上传</p>
             <p class="text-xs text-[var(--text-secondary)] mt-1">支持: {{ ALLOWED_EXTENSIONS.join(', ') }}</p>
             <input type="file" @change="(e) => { const file = (e.target as HTMLInputElement).files?.[0]; if (file) uploadFile(file); }" class="hidden" id="file-upload" />
-            <button @click="() => (document.getElementById('file-upload') as HTMLInputElement)?.click()" class="mt-3 px-4 py-2 bg-[var(--primary-color)] text-white rounded-lg text-sm">选择文件</button>
+            <button @click="triggerFileUpload" class="mt-3 px-4 py-2 bg-[var(--primary-color)] text-white rounded-lg text-sm">选择文件</button>
           </div>
           <div class="space-y-2 max-h-60 overflow-y-auto">
             <div v-if="ragFiles.length === 0" class="text-center text-[var(--text-secondary)] py-4">

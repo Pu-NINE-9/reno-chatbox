@@ -19,7 +19,16 @@ export const validateApiKey = (
     return;
   }
 
-  if (apiKey !== validApiKey) {
+  // 尝试解码 Base64 编码的 API Key
+  let decodedApiKey = apiKey;
+  try {
+    decodedApiKey = Buffer.from(apiKey, 'base64').toString('utf-8');
+  } catch (err) {
+    console.log('[API Key Validation] Base64 decode failed, using original');
+  }
+
+
+  if (decodedApiKey !== validApiKey) {
     next(new AppError(403, 'Invalid API key', 'INVALID_API_KEY'));
     return;
   }

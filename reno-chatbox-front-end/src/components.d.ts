@@ -11,6 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    CodeBlock: typeof import('./components/codeBlock/CodeBlock.vue')['default']
     ElConfigProvider: typeof import('element-plus/es')['ElConfigProvider']
     MarkdownRenderer: typeof import('./components/markdown/MarkdownRenderer.vue')['default']
     README: typeof import('./components/dialog/README.md')['default']

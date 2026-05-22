@@ -24,6 +24,7 @@
   fetch-event-source = 生产级 SSE 标准
 */
 import { fetchEventSource } from '@microsoft/fetch-event-source'
+import { encrypt } from '@/utils/crypto'
 
 /*
   流式消息参数
@@ -59,25 +60,29 @@ class StreamChat {
     let fullAnswer = ''
 
     try {
+      const requestBody = JSON.stringify({
+        messages: [...messages, { role: 'user', content: message }],
+        temperature: 0.7,
+        maxTokens: 4096,
+        useRag,
+        ragTopK: 5,
+      })
+
+      const encryptedBody = encrypt(requestBody)
+
       await fetchEventSource(import.meta.env.VITE_API_URL + '/api/chat/stream', {
         method: 'POST',
         headers: {
-          'x-api-key': import.meta.env.VITE_API_KEY,
+          'x-api-key': btoa(import.meta.env.VITE_API_KEY || ''),
           'Content-Type': 'application/json',
+          'X-Encrypted': 'true',
         },
-        body: JSON.stringify({
-          messages: [...messages, { role: 'user', content: message }],
-          temperature: 0.7,
-          maxTokens: 4096,
-          useRag,
-          ragTopK: 5,
-        }),
+        body: JSON.stringify({ payload: encryptedBody }),
         signal,
         openWhenHidden: true,
         credentials: 'omit',
 
         onopen: async (response) => {
-          console.log('[SSE] 连接打开，响应状态:', response.status, response.statusText)
           if (!response.ok) {
             const errorText = await response.text()
             throw new Error(`请求失败 ${response.status}: ${errorText}`)
@@ -89,8 +94,6 @@ class StreamChat {
           try {
             if (!event.data) return
 
-            console.log('[SSE] 收到数据:', event.data)
-
             // 后端返回的是纯文本流（token by token）
             fullAnswer += event.data
             onMessage({ content: fullAnswer, isLoading: true })
@@ -100,7 +103,6 @@ class StreamChat {
         },
 
         onclose: () => {
-          console.log('SSE 连接关闭')
           // 连接关闭表示消息发送完成
           onMessage({ content: fullAnswer, isLoading: false })
           onComplete({ answer: fullAnswer })

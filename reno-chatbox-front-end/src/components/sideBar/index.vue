@@ -36,6 +36,14 @@ const toggleLang = () => {
   localStorage.setItem('lang', newLang)
 }
 
+// 点击上传区域触发文件选择
+const triggerFileInput = () => {
+  const input = window.document.getElementById('rag-file-input') as HTMLInputElement
+  if (input) {
+    input.click()
+  }
+}
+
 // 加载RAG文件列表
 const loadRagFiles = async () => {
   isLoading.value = true
@@ -166,7 +174,7 @@ onMounted(() => {
             'font-semibold text-lg',
             themeStore.theme === 'dark' ? 'text-white' : 'text-gray-900',
           ]"
-          >RAG Chat</span
+          >Reno Chat</span
         >
       </div>
       <div
@@ -259,7 +267,7 @@ onMounted(() => {
         ]"
         @drop="handleDrop"
         @dragover="handleDragOver"
-        @click="() => (document.getElementById('rag-file-input') as HTMLInputElement)?.click()"
+        @click="triggerFileInput"
       >
         <input
           type="file"
