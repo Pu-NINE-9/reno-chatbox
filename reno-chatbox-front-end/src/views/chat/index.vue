@@ -172,9 +172,7 @@ const handleClearHistory = async () => {
 };
 
 // 加载对话历史到本地存储
-const loadHistoryToStore = () => {
-  // 从日志看，historyData.value 直接就是 { messages: [], lastModified: number }
-  // 而不是 { success: true, data: {...} }
+  const loadHistoryToStore = () => {
   const history = historyData.value as any;
   if (history && history.messages && history.messages.length > 0) {
     const historyMessages = history.messages;
@@ -189,12 +187,13 @@ const loadHistoryToStore = () => {
     });
     return true;
   }
-  console.log('[DEBUG] No history data to load, history:', history);
   return false;
 };
 
 watch(() => messages.value.length, () => {
-  scrollToBottom();
+  nextTick(() => {
+    scrollToBottom();
+  });
 });
 
 onMounted(async () => {
@@ -220,7 +219,10 @@ onMounted(async () => {
     };
     chatStore.addMessage(welcomeMessage);
   }
-  scrollToBottom();
+
+  nextTick(() => {
+    scrollToBottom();
+  });
   await loadRagFiles();
 });
 </script>
@@ -257,6 +259,7 @@ onMounted(async () => {
       </div>
     </transition>
 
+    <!-- 顶部消息栏 -->
     <header
       class="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-card)]"
     >
@@ -298,96 +301,32 @@ onMounted(async () => {
       </div>
     </header>
 
-    <div ref="messagesContainer" class="flex-1 overflow-y-auto p-6 space-y-6">
-      <div
-        v-for="message in messages"
-        :key="message.id"
-        :class="[
-          'flex gap-3 w-full',
-          message.role === 'user' ? 'flex-row-reverse justify-end' : 'justify-start',
-        ]"
+    <div ref="messagesContainer" class="flex-1 overflow-hidden p-6">
+      <DynamicScroller
+        :items="messages"
+        :min-item-size="80"
+        class="h-full"
       >
-        <div
-          :class="[
-            'w-10 h-10 rounded-lg flex-shrink-0 flex items-center justify-center',
-            message.role === 'user' ? 'bg-[var(--primary-color)]' : 'bg-[var(--border-color)]',
-          ]"
-        >
-          <svg
-            v-if="message.role === 'system'"
-            class="w-5 h-5 text-[var(--text-secondary)]"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        <template #default="{ item: message, index }">
+          <DynamicScrollerItem
+            :item="message"
+            :index="index"
+            :data-key="message.id"
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-            />
-          </svg>
-          <span v-else-if="message.role === 'user'" class="text-white text-sm font-medium">U</span>
-          <svg
-            v-else
-            class="w-5 h-5 text-[var(--text-secondary)]"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-            />
-          </svg>
-        </div>
-
-        <div :class="['max-w-[70%]', message.role === 'user' ? 'text-right ml-auto' : 'text-left']">
-          <div
-            :class="[
-              'inline-block px-4 py-3 rounded-xl',
-              message.role === 'user'
-                ? 'bg-[var(--primary-color)] text-white rounded-tr-sm'
-                : 'bg-[var(--bg-card)] border border-[var(--border-color)] rounded-tl-sm',
-            ]"
-          >
-            <div v-if="message.content && !message.file">
-              <MarkdownRenderer v-if="message.role === 'assistant'" :content="message.content" />
-              <p
-                v-else
+            <div
+              :class="[
+                'flex gap-3 w-full py-6',
+                message.role === 'user' ? 'flex-row-reverse justify-end' : 'justify-start',
+              ]"
+            >
+              <div
                 :class="[
-                  'text-sm leading-relaxed whitespace-pre-wrap',
-                  message.role === 'user' ? 'text-white' : 'text-[var(--text-color)]',
+                  'w-10 h-10 rounded-lg flex-shrink-0 flex items-center justify-center',
+                  message.role === 'user' ? 'bg-[var(--primary-color)]' : 'bg-[var(--border-color)]',
                 ]"
               >
-                {{ message.content }}
-              </p>
-            </div>
-
-            <div v-else-if="message.role === 'assistant' && !message.content && isLoading">
-              <div class="flex gap-1">
-                <span
-                  class="w-2 h-2 bg-[var(--primary-color)] rounded-full animate-bounce"
-                  style="animation-delay: 0ms"
-                ></span>
-                <span
-                  class="w-2 h-2 bg-[var(--primary-color)] rounded-full animate-bounce"
-                  style="animation-delay: 150ms"
-                ></span>
-                <span
-                  class="w-2 h-2 bg-[var(--primary-color)] rounded-full animate-bounce"
-                  style="animation-delay: 300ms"
-                ></span>
-              </div>
-            </div>
-
-            <div v-if="message.file" class="flex items-center gap-3">
-              <div
-                class="w-10 h-10 rounded-lg bg-[var(--border-color)]/50 flex items-center justify-center flex-shrink-0"
-              >
                 <svg
+                  v-if="message.role === 'system'"
                   class="w-5 h-5 text-[var(--text-secondary)]"
                   fill="none"
                   stroke="currentColor"
@@ -397,44 +336,120 @@ onMounted(async () => {
                     stroke-linecap="round"
                     stroke-linejoin="round"
                     stroke-width="2"
-                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
+                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                />
+              </svg>
+              <span v-else-if="message.role === 'user'" class="text-white text-sm font-medium">U</span>
+              <svg
+                v-else
+                class="w-5 h-5 text-[var(--text-secondary)]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                />
+              </svg>
+            </div>
+
+            <div :class="['max-w-[70%]', message.role === 'user' ? 'text-right ml-auto' : 'text-left']">
+              <div
+                :class="[
+                  'inline-block px-4 py-3 rounded-xl',
+                  message.role === 'user'
+                    ? 'bg-[var(--primary-color)] text-white rounded-tr-sm'
+                    : 'bg-[var(--bg-card)] border border-[var(--border-color)] rounded-tl-sm',
+                ]"
+              >
+                <div v-if="message.content && !message.file">
+                  <MarkdownRenderer v-if="message.role === 'assistant'" :content="message.content" />
+                  <p
+                    v-else
+                    :class="[
+                      'text-sm leading-relaxed whitespace-pre-wrap',
+                      message.role === 'user' ? 'text-white' : 'text-[var(--text-color)]',
+                    ]"
+                  >
+                    {{ message.content }}
+                  </p>
+                </div>
+
+                <div v-else-if="message.role === 'assistant' && !message.content && isLoading">
+                  <div class="flex gap-1">
+                    <span
+                      class="w-2 h-2 bg-[var(--primary-color)] rounded-full animate-bounce"
+                      style="animation-delay: 0ms"
+                    ></span>
+                    <span
+                      class="w-2 h-2 bg-[var(--primary-color)] rounded-full animate-bounce"
+                      style="animation-delay: 150ms"
+                    ></span>
+                    <span
+                      class="w-2 h-2 bg-[var(--primary-color)] rounded-full animate-bounce"
+                      style="animation-delay: 300ms"
+                    ></span>
+                  </div>
+                </div>
+
+                <div v-if="message.file" class="flex items-center gap-3">
+                  <div
+                    class="w-10 h-10 rounded-lg bg-[var(--border-color)]/50 flex items-center justify-center flex-shrink-0"
+                  >
+                    <svg
+                      class="w-5 h-5 text-[var(--text-secondary)]"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p
+                      :class="[
+                        'text-sm font-medium truncate',
+                        message.role === 'user' ? 'text-white' : 'text-[var(--text-color)]',
+                      ]"
+                    >
+                      {{ message.file.name }}
+                    </p>
+                    <p
+                      :class="[
+                        'text-xs',
+                        message.role === 'user' ? 'text-white/70' : 'text-[var(--text-secondary)]',
+                      ]"
+                    >
+                      {{ message.file.size }}
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div class="flex-1 min-w-0">
-                <p
-                  :class="[
-                    'text-sm font-medium truncate',
-                    message.role === 'user' ? 'text-white' : 'text-[var(--text-color)]',
-                  ]"
+              <span class="text-xs text-[var(--text-secondary)] mt-1 block">{{ message.time }}</span>
+
+              <div v-if="message.suggestions" class="flex flex-wrap gap-2 mt-3 justify-start">
+                <button
+                  v-for="suggestion in message.suggestions"
+                  :key="suggestion.id"
+                  @click="handleSuggestion(suggestion.text)"
+                  class="px-3 py-1.5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-full text-xs text-[var(--text-secondary)] hover:border-[var(--primary-color)] hover:text-[var(--primary-color)] transition-colors"
                 >
-                  {{ message.file.name }}
-                </p>
-                <p
-                  :class="[
-                    'text-xs',
-                    message.role === 'user' ? 'text-white/70' : 'text-[var(--text-secondary)]',
-                  ]"
-                >
-                  {{ message.file.size }}
-                </p>
+                  {{ suggestion.text }}
+                </button>
               </div>
             </div>
-          </div>
-          <span class="text-xs text-[var(--text-secondary)] mt-1 block">{{ message.time }}</span>
-
-          <div v-if="message.suggestions" class="flex flex-wrap gap-2 mt-3 justify-start">
-            <button
-              v-for="suggestion in message.suggestions"
-              :key="suggestion.id"
-              @click="handleSuggestion(suggestion.text)"
-              class="px-3 py-1.5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-full text-xs text-[var(--text-secondary)] hover:border-[var(--primary-color)] hover:text-[var(--primary-color)] transition-colors"
-            >
-              {{ suggestion.text }}
-            </button>
-          </div>
-        </div>
-      </div>
+            </div>
+          </DynamicScrollerItem>
+        </template>
+      </DynamicScroller>
     </div>
 
     <div class="border-t border-[var(--border-color)] p-4 bg-[var(--bg-card)]">
