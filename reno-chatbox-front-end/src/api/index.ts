@@ -37,6 +37,17 @@ export interface RetrieveResult {
   count: number
 }
 
+export interface ConversationMessage {
+  role: 'system' | 'user' | 'assistant'
+  content: string
+  timestamp: number
+}
+
+export interface ConversationHistory {
+  messages: ConversationMessage[]
+  lastModified: number
+}
+
 export interface ParseRequest {
   type: 'json' | 'xml' | 'csv' | 'markdown' | 'plain'
   data: string
@@ -82,4 +93,12 @@ export const parseAPI = {
 
 export const healthAPI = {
   check: () => request.get('/health'),
+}
+
+export const historyAPI = {
+  getHistory: () => request.get('/api/history'),
+
+  clearHistory: () => request.delete('/api/history'),
+
+  getCount: () => request.get('/api/history/count'),
 }

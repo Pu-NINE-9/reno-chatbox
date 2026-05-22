@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { chatService, ChatMessage } from '../services/chatService';
 import { ragService } from '../services/ragService';
+import { conversationHistoryService } from '../services/conversationHistoryService';
 import { AppError } from '../middleware/errorHandler';
 import { logger } from '../utils/logger';
 
@@ -56,6 +57,21 @@ chatRoutes.post('/', async (req: Request, res: Response, next) => {
       maxTokens,
     });
 
+    // 保存对话历史
+    const lastUserMsg = messages.filter(m => m.role === 'user').pop();
+    if (lastUserMsg) {
+      conversationHistoryService.addMessage({
+        role: 'user',
+        content: lastUserMsg.content,
+        timestamp: Date.now(),
+      });
+    }
+    conversationHistoryService.addMessage({
+      role: 'assistant',
+      content: response.content,
+      timestamp: Date.now(),
+    });
+
     res.json({
       success: true,
       data: response,
@@ -103,11 +119,28 @@ chatRoutes.post('/stream', async (req: Request, res: Response, next) => {
         ]
       : messages;
 
+    // 保存用户消息到历史
+    const lastUserMsg = messages.filter(m => m.role === 'user').pop();
+    if (lastUserMsg) {
+      conversationHistoryService.addMessage({
+        role: 'user',
+        content: lastUserMsg.content,
+        timestamp: Date.now(),
+      });
+    }
+
     try {
       const response = await chatService.chat({
         messages: effectiveMessages,
         temperature,
         maxTokens,
+      });
+
+      // 保存助手响应到历史
+      conversationHistoryService.addMessage({
+        role: 'assistant',
+        content: response.content,
+        timestamp: Date.now(),
       });
 
       // 以流的方式逐字符发送响应

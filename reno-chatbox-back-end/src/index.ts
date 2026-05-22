@@ -6,6 +6,7 @@ import { logger } from './utils/logger';
 import { chatRoutes } from './routes/chat';
 import { ragRoutes } from './routes/rag';
 import { parseRoutes } from './routes/parse';
+import { historyRoutes } from './routes/history';
 import { errorHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger';
 import { validateApiKey } from './middleware/validateApiKey';
@@ -81,6 +82,7 @@ app.get('/health', (req: Request, res: Response) => {
 app.use('/api/chat', validateApiKey, chatRoutes);
 app.use('/api/rag', validateApiKey, cacheMiddleware({ ttl: 5 * 60 * 1000 }), ragRoutes);
 app.use('/api/parse', validateApiKey, parseRoutes);
+app.use('/api/history', validateApiKey, historyRoutes);
 
 app.use(errorHandler);
 
