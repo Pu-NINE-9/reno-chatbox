@@ -20,8 +20,8 @@
  */
 
 import type { Directive } from "vue"
-import { debounce } from 'lodash'
-import type { DebouncedFunc } from 'lodash'
+import { debounce } from 'lodash-es'
+import type { DebouncedFunc } from 'lodash-es'
 
 const debounceMap = new WeakMap<HTMLElement, DebouncedFunc<(...args: any[]) => void>>() // TODO: 缓存每个DOM对应的防抖函数，卸载时清理
 

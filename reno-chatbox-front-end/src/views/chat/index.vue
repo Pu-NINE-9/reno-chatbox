@@ -228,6 +228,7 @@ onMounted(async () => {
 </script>
 
 <template>
+  <!-- 【主容器】整个聊天页面的根容器支持拖拽上传文件（绑定了拖拽事件） -->
   <div
     class="h-full flex flex-col bg-[var(--bg-color)]"
     @dragenter="handleDragEnter"
@@ -235,6 +236,10 @@ onMounted(async () => {
     @dragover="handleDragOver"
     @drop="handleDrop"
   >
+
+    <!-- 【拖拽上传遮罩层】当用户拖拽文件时显示 -->
+    <!-- 使用 transition 组件实现淡入淡出动画 -->
+    <!-- z-50 确保遮罩层在最上层 -->
     <transition name="fade">
       <div
         v-if="isDragging"
@@ -301,18 +306,35 @@ onMounted(async () => {
       </div>
     </header>
 
+    <!-- 【消息列表区域】核心区域，使用虚拟滚动优化性能 -->
+    <!-- 关键组件说明： -->
+    <!-- 1. DynamicScroller：虚拟滚动容器，支持动态高度 -->
+    <!--    - :items="messages"：数据源，消息数组 -->
+    <!--    - :min-item-size="80"：最小项高度，用于估算虚拟滚动位置 -->
+    <!--    - class="h-full"：占满父容器高度 -->
+    <!-- 2. DynamicScrollerItem：虚拟滚动的单项包装器 -->
+    <!--    - :item="message"：当前项数据 -->
+    <!--    - :index="index"：当前项索引 -->
+    <!--    - :data-key="message.id"：唯一标识，用于优化渲染 -->
+    <!-- 优势：只渲染可视区域的消息，支持动态高度，性能更好 -->
+
     <div ref="messagesContainer" class="flex-1 overflow-hidden p-6">
+      <!-- 虚拟滚动容器 -->
       <DynamicScroller
         :items="messages"
         :min-item-size="80"
         class="h-full"
       >
+        <!-- 消息项模板（使用 slot 分发） -->
         <template #default="{ item: message, index }">
           <DynamicScrollerItem
             :item="message"
             :index="index"
             :data-key="message.id"
           >
+            <!-- 【单条消息】支持三种角色：system / user / assistant -->
+            <!-- 根据角色显示不同样式和布局 -->
+            <!-- 用户消息在右侧，助手消息在左侧 -->
             <div
               :class="[
                 'flex gap-3 w-full py-6',
@@ -339,7 +361,9 @@ onMounted(async () => {
                     d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
                 />
               </svg>
+              <!-- 用户消息：显示 "U" 字母 -->
               <span v-else-if="message.role === 'user'" class="text-white text-sm font-medium">U</span>
+              <!-- 助手消息图标：消息气泡图标 -->
               <svg
                 v-else
                 class="w-5 h-5 text-[var(--text-secondary)]"
@@ -356,7 +380,13 @@ onMounted(async () => {
               </svg>
             </div>
 
+            <!-- 消息内容区域 -->
+            <!-- max-w-[70%]：限制消息宽度，避免过宽 -->
+            <!-- 根据角色调整对齐方式 -->
             <div :class="['max-w-[70%]', message.role === 'user' ? 'text-right ml-auto' : 'text-left']">
+              <!-- 消息气泡 -->
+              <!-- 用户消息：主色调背景，白色文字，右上圆角较小 -->
+              <!-- 助手消息：卡片背景，带边框，左上圆角较小 -->
               <div
                 :class="[
                   'inline-block px-4 py-3 rounded-xl',
@@ -365,6 +395,9 @@ onMounted(async () => {
                     : 'bg-[var(--bg-card)] border border-[var(--border-color)] rounded-tl-sm',
                 ]"
               >
+                <!-- 文字内容 -->
+                <!-- 助手消息使用 MarkdownRenderer 渲染（支持代码高亮） -->
+                <!-- 用户消息直接显示纯文本 -->
                 <div v-if="message.content && !message.file">
                   <MarkdownRenderer v-if="message.role === 'assistant'" :content="message.content" />
                   <p
@@ -378,6 +411,8 @@ onMounted(async () => {
                   </p>
                 </div>
 
+                <!-- 加载状态（打字动画） -->
+                <!-- 三个圆点依次弹跳，模拟打字效果 -->
                 <div v-else-if="message.role === 'assistant' && !message.content && isLoading">
                   <div class="flex gap-1">
                     <span
@@ -394,6 +429,9 @@ onMounted(async () => {
                     ></span>
                   </div>
                 </div>
+
+                <!-- 文件附件 -->
+                <!-- 显示文件图标、文件名和文件大小 -->
 
                 <div v-if="message.file" class="flex items-center gap-3">
                   <div
@@ -433,8 +471,12 @@ onMounted(async () => {
                   </div>
                 </div>
               </div>
+              <!-- 消息时间戳 -->
               <span class="text-xs text-[var(--text-secondary)] mt-1 block">{{ message.time }}</span>
 
+
+              <!-- 建议回复按钮（系统消息专用） -->
+              <!-- 点击后自动填充到输入框 -->
               <div v-if="message.suggestions" class="flex flex-wrap gap-2 mt-3 justify-start">
                 <button
                   v-for="suggestion in message.suggestions"
@@ -452,9 +494,13 @@ onMounted(async () => {
       </DynamicScroller>
     </div>
 
+
+    <!-- 【底部输入区域】用户输入消息的地方 -->
+    <!-- 包含：加号按钮、输入框、发送按钮 -->
     <div class="border-t border-[var(--border-color)] p-4 bg-[var(--bg-card)]">
       <div class="max-w-4xl mx-auto">
         <div class="flex items-center gap-3">
+          <!-- 加号按钮（可扩展功能，如上传文件） -->
           <button class="p-2 hover:bg-[var(--border-color)]/50 rounded-lg transition-colors">
             <svg
               class="w-5 h-5 text-[var(--text-secondary)]"
@@ -470,7 +516,10 @@ onMounted(async () => {
               />
             </svg>
           </button>
+
+          <!-- 输入框容器 -->
           <div class="flex-1 relative">
+            <!-- 多行文本输入框 -->
             <textarea
               v-model="inputMessage"
               @keydown.enter.exact.prevent="sendMessage"
@@ -478,6 +527,7 @@ onMounted(async () => {
               class="w-full px-4 py-3 bg-[var(--bg-color)] border border-[var(--border-color)] rounded-xl text-sm text-[var(--text-color)] placeholder-[var(--text-secondary)] resize-none focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]/50"
               rows="2"
             ></textarea>
+            <!-- 快捷键提示 -->
             <div
               class="absolute right-3 bottom-3 flex items-center gap-1 text-xs text-[var(--text-secondary)]"
             >
@@ -488,6 +538,8 @@ onMounted(async () => {
               <span>换行</span>
             </div>
           </div>
+
+          <!-- 发送按钮 -->
           <button
             @click="sendMessage"
             :disabled="!inputMessage.trim() || isLoading"
@@ -511,8 +563,13 @@ onMounted(async () => {
       </div>
     </div>
 
+
+    <!-- 【文件上传弹窗】管理知识库文件 -->
+    <!-- 包含：文件上传区域、文件列表、删除功能 -->
+
     <div v-if="showFileUploadModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div class="bg-[var(--bg-card)] rounded-xl w-full max-w-md mx-4 max-h-[80vh] overflow-hidden">
+        <!-- 弹窗头部 -->
         <div class="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)]">
           <h3 class="font-medium text-[var(--text-color)]">知识库文件</h3>
           <button @click="showFileUploadModal = false" class="p-2 hover:bg-[var(--border-color)]/50 rounded-lg">
@@ -521,16 +578,20 @@ onMounted(async () => {
             </svg>
           </button>
         </div>
+        <!-- 弹窗内容 -->
         <div class="p-4">
+          <!-- 文件上传区域 -->
           <div class="border-2 border-dashed border-[var(--border-color)] rounded-lg p-8 text-center mb-4">
             <svg class="w-12 h-12 text-[var(--text-secondary)] mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
             <p class="text-[var(--text-color)]">拖拽文件到这里上传</p>
             <p class="text-xs text-[var(--text-secondary)] mt-1">支持: {{ ALLOWED_EXTENSIONS.join(', ') }}</p>
+            <!-- 隐藏的文件输入 -->
             <input type="file" @change="(e) => { const file = (e.target as HTMLInputElement).files?.[0]; if (file) uploadFile(file); }" class="hidden" id="file-upload" />
             <button @click="triggerFileUpload" class="mt-3 px-4 py-2 bg-[var(--primary-color)] text-white rounded-lg text-sm">选择文件</button>
           </div>
+          <!-- 文件列表 -->
           <div class="space-y-2 max-h-60 overflow-y-auto">
             <div v-if="ragFiles.length === 0" class="text-center text-[var(--text-secondary)] py-4">
               暂无文件
@@ -545,6 +606,7 @@ onMounted(async () => {
                   <p class="text-xs text-[var(--text-secondary)]">{{ formatFileSize(file.fileSize) }}</p>
                 </div>
               </div>
+              <!-- 删除按钮 -->
               <button @click="deleteRagFile(file.id)" class="p-2 text-red-500 hover:bg-red-50 rounded-lg">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

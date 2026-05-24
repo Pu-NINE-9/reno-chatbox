@@ -18,7 +18,7 @@
  * <div v-throttle:scroll="handleScroll">滚动区域</div>
  */
 import type { Directive } from 'vue'
-import { throttle } from 'lodash'
+import { throttle } from 'lodash-es'
 
 // 缓存每个DOM对应的节流函数，组件卸载时清理，防止内存泄漏
 const throttleMap = new WeakMap<HTMLElement, ReturnType<typeof throttle>>()
