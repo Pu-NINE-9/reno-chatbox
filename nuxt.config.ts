@@ -52,14 +52,18 @@ export default defineNuxtConfig({
   },
   // TODO: 指定CSS位置
   css: ['~/assets/css/main.css'],
+  // TODO: ui 配置
   ui: {
     // 禁用自动引入 @nuxt/fonts 模块，不再发起google请求
     fonts: false
   },
+  // TODO: 兼容性配置
   compatibilityDate: '2025-07-31',
-  devtools: {
+  // TODO: 开启devtools
+   devtools: {
     enabled: true
   },
+  // TODO: 环境变量配置
   runtimeConfig: {
     // 仅服务端可见, 不会暴露给前端
     db: {
@@ -74,5 +78,19 @@ export default defineNuxtConfig({
       modelName: process.env.NUXT_MODEL_NAME,
       systemPromptText: process.env.NUXT_MODEL_SYSTEM_PROMPT_TEXT,
     }
-  }
+  },
+  vite: {
+    // 关闭模块持久化缓存，根治长时间运行缓存卡死
+    cacheDir: '.vite-cache',
+    server: {
+      // Windows 修复文件监听失效
+      watch: {
+        usePolling: true, // 轮询模式！解决Windows chokidar监听丢失
+        interval: 800
+      }
+    },
+    build: {
+      sourcemap: true
+    }
+  },
 })

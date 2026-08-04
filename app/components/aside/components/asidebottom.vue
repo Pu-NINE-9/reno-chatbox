@@ -1,5 +1,10 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import uploadFile from './uploadFile.vue'
+</script>
 
 <template>
-  <div>1111111111111111</div>
+  <div class="h-[450px]">
+    <!-- 文件上传区域 -->
+    <uploadFile />
+  </div>
 </template>

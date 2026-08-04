@@ -1,5 +1,7 @@
 <script setup lang="ts"></script>
 
 <template>
-  <div>1111111111111111</div>
+  <div class="w-full flex-1 border-0 border-b-2 border-[var(--ui-primary)]">
+    <div>4235423525</div>
+  </div>
 </template>
