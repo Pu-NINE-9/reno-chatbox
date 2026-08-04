@@ -7,14 +7,42 @@
     "dev": "nuxt dev --open",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
+    "@comark/nuxt": "^0.5.1",
+    "@langchain/core": "^1.2.4",
+    "@langchain/deepseek": "^1.1.5",
+    "@microsoft/fetch-event-source": "^2.0.1",
+    "@nuxt/ui": "^4.10.0",
+    "@nuxtjs/i18n": "10.6.0",
+    "@pinia/nuxt": "1.0.1",
+    "drizzle-orm": "^0.45.2",
+    "mysql2": "^3.23.2",
     "nuxt": "^4.5.1",
+    "pinia": "^4.0.2",
+    "pinia-plugin-persistedstate": "^4.7.1",
+    "shiki": "^4.4.1",
+    "tailwindcss": "^4.3.3",
     "vue": "^3.5.40",
     "vue-router": "^5.2.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "drizzle-kit": "^0.31.10",
+    "eslint": "^10.8.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.6",
+    "eslint-plugin-vue": "^10.10.0",
+    "globals": "^17.9.0",
+    "prettier": "^3.9.6",
+    "typescript-eslint": "^8.65.0",
     "unplugin-auto-import": "^21.0.0",
     "unplugin-vue-components": "^32.1.0"
   }

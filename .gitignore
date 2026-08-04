@@ -17,8 +17,18 @@ logs
 .DS_Store
 .fleet
 .idea
+.vscode
+.trae
 
 # Local env files
 .env
 .env.*
 !.env.example
+
+# Dev tools
+.agents/
+.claude/
+skills-lock.json
+
+# OS
+Thumbs.db

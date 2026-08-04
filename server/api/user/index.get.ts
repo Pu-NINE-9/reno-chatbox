@@ -1,10 +1,15 @@
+import { failAPI, successAPI } from '~~/server/utils/response'
+import { user } from '~~/server/db/schema'
 import { db } from '~~/server/db'
-import { userTable } from '~~/server/db/schema'
-import { success } from '~~/server/utils/response'
 
-// 接口必须加async，数据库查询是异步操作
-export default defineEventHandler(async () => {
-  // 查询user表全部数据
-  const userList = await db.select().from(userTable)
-  return success(userList)
+export default defineEventHandler(async (event) => {
+  try {
+    const res = await db.select().from(user)
+
+    // 外层 return，正常返回给前端
+    return successAPI(res)
+  } catch (err) {
+    globalThis.console.error('❌ 数据库查询失败：', (err as Error).message)
+    return failAPI((err as Error).message)
+  }
 })

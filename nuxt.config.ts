@@ -1,10 +1,78 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  ssr: false,
   modules: [
-    '@element-plus/nuxt'
+    '@nuxt/ui',
+    '@comark/nuxt',
+    '@nuxtjs/i18n',
+    '@pinia/nuxt',
+    'pinia-plugin-persistedstate/nuxt',
   ],
-  compatibilityDate: '2025-07-15',
+  // TODO: app配置
+  app: {
+    head: {
+      // 设置网站logo
+      link: [
+        {
+          rel: 'icon',
+          href: '/website-logo.ico',
+          type: 'image/x-icon'
+        }
+      ]
+    }
+  },
+  // TODO: i18n国际化配置
+  i18n: {
+    strategy: 'no_prefix',
+    defaultLocale: 'zh',
+    langDir: 'locales',
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'i18n_redirected',
+      alwaysRedirect: false,
+      redirectOn: 'root',
+      fallbackLocale: 'zh'
+    },
+    locales: [
+      { code: 'zh', name: '中文', file: 'zh.json' },
+      { code: 'en', name: 'English', file: 'en.json' },
+    ]
+  },
+  // TODO: pinia 配置
+  pinia: {
+    storesDirs: ['stores']
+  },
+  // ✅ 全局自动导入，这是Nuxt标准API，类型不会报错
+  imports: {
+    presets: [
+      {
+        from: 'pinia',
+        imports: ['defineStore']
+      }
+    ]
+  },
+  // TODO: 指定CSS位置
+  css: ['~/assets/css/main.css'],
+  ui: {
+    // 禁用自动引入 @nuxt/fonts 模块，不再发起google请求
+    fonts: false
+  },
+  compatibilityDate: '2025-07-31',
   devtools: {
     enabled: true
   },
+  runtimeConfig: {
+    // 仅服务端可见, 不会暴露给前端
+    db: {
+      host: process.env.NUXT_DB_HOST,
+      port: Number(process.env.NUXT_DB_PORT),
+      user: process.env.NUXT_DB_USER,
+      password: process.env.NUXT_DB_PASSWORD,
+      database: process.env.NUXT_DB_DATABASE
+    },
+    ai: {
+      apiKey: process.env.NUXT_DEEPSEEK_API_KEY,
+      modelName: process.env.NUXT_MODEL_NAME,
+      systemPromptText: process.env.NUXT_MODEL_SYSTEM_PROMPT_TEXT,
+    }
+  }
 })
