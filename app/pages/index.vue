@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { fetchEventSource } from '@microsoft/fetch-event-source'
 import highlight from '@comark/nuxt/plugins/highlight'
+import streamChat from '~/utils/sse'
+
+const { getModelListResponse } = getResponse()
 
 const { t } = useI18n()
 
@@ -31,7 +33,6 @@ const messages = ref<ChatMessage[]>([
   }
 ])
 const status = ref<'streaming' | 'ready' | 'error'>('ready')
-let abortController: AbortController | null = null
 
 async function onSubmit() {
   const text = input.value.trim()
@@ -54,8 +55,6 @@ async function onSubmit() {
   messages.value.push(assistantMsg)
 
   status.value = 'streaming'
-  abortController = new AbortController()
-  let fullContent = ''
 
   const historyMessages = messages.value
     .filter((m) => m.id !== 'init' && m.id !== assistantId)
@@ -64,71 +63,42 @@ async function onSubmit() {
       content: m.parts.map((p) => p.text).join('')
     }))
 
-  try {
-    await fetchEventSource('/api/ai/stream', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'text/event-stream'
-      },
-      body: JSON.stringify({ messages: historyMessages }),
-      signal: abortController.signal,
-      openWhenHidden: true,
+  const msg = messages.value.find((m) => m.id === assistantId)
 
-      onopen: async (response) => {
-        if (!response.ok) {
-          throw new Error(`请求失败 ${response.status}`)
-        }
-      },
-
-      onmessage: (event) => {
-        try {
-          const data = JSON.parse(event.data)
-          if (event.event === 'message' && data.content) {
-            fullContent += data.content
-            const msg = messages.value.find((m) => m.id === assistantId)
-            if (msg && msg.parts[0]) {
-              msg.parts[0].text = fullContent
-            }
-          } else if (event.event === 'error') {
-            const msg = messages.value.find((m) => m.id === assistantId)
-            if (msg && msg.parts[0]) {
-              msg.parts[0].text = `请求失败：${data.msg || '未知错误'}`
-            }
-            status.value = 'error'
-          }
-        } catch (e) {
-          console.warn('SSE parse error:', e)
-        }
-      },
-
-      onclose: () => {
-        if (status.value === 'streaming') {
-          status.value = 'ready'
-        }
-        abortController = null
-      },
-
-      onerror: (err) => {
-        status.value = 'error'
-        abortController = null
-        const msg = messages.value.find((m) => m.id === assistantId)
-        if (msg && msg.parts[0] && !msg.parts[0].text) {
-          msg.parts[0].text = `调用 AI 接口失败：${err?.message || '网络异常'}`
-        }
-        console.error('SSE error:', err)
-        throw err
+  await streamChat.chat({
+    messages: historyMessages,
+    modelName: modelName.value,
+    onMessage: (content) => {
+      if (msg && msg.parts[0]) {
+        msg.parts[0].text = content
       }
-    })
-  } catch (err: any) {
-    status.value = 'error'
-    abortController = null
-    const msg = messages.value.find((m) => m.id === assistantId)
-    if (msg && msg.parts[0] && !msg.parts[0].text) {
-      msg.parts[0].text = `调用 AI 接口失败：${err?.message || '网络异常，请稍后重试'}`
+    },
+    onComplete: () => {
+      if (status.value === 'streaming') {
+        status.value = 'ready'
+      }
+    },
+    onError: (err) => {
+      status.value = 'error'
+      if (msg && msg.parts[0] && !msg.parts[0].text) {
+        msg.parts[0].text = `调用 AI 接口失败：${err?.message || '网络异常，请稍后重试'}`
+      }
+    }
+  })
+}
+
+const modelName = ref('')
+const modelList = ref<{ label: string; value: string }[]>([])
+
+onMounted(async () => {
+  const res = await getModelListResponse()
+  if (res?.modelNames) {
+    modelList.value = res.modelNames.map((name: string) => ({ label: name, value: name }))
+    if (modelList.value.length > 0 && !modelName.value) {
+      modelName.value = modelList.value[0].value
     }
   }
-}
+})
 </script>
 
 <template>
@@ -170,7 +140,21 @@ async function onSubmit() {
       </template>
     </UChatMessages>
 
+    <!-- 输入框整体区域 -->
     <UChatPalette class="shrink-0" style="flex: none">
+      
+      <!-- 模型列表 -->
+      <div class="flex justify-center w-full">
+        <USelectMenu
+          v-model="modelName"
+          value-key="value"
+          :items="modelList"
+          placeholder="请选择模型"
+          class="w-4/5"
+        />
+      </div>
+      
+      <!-- 输入框区域 -->
       <template #prompt>
         <div class="flex justify-center w-full">
           <div class="flex w-4/5 align-center justify-center">

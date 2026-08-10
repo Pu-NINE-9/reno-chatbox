@@ -41,7 +41,7 @@ export default defineNuxtConfig({
   pinia: {
     storesDirs: ['stores']
   },
-  // ✅ 全局自动导入，这是Nuxt标准API，类型不会报错
+  // TODO: 全局自动导入，这是Nuxt标准API，类型不会报错
   imports: {
     presets: [
       {
@@ -60,7 +60,7 @@ export default defineNuxtConfig({
   // TODO: 兼容性配置
   compatibilityDate: '2025-07-31',
   // TODO: 开启devtools
-   devtools: {
+  devtools: {
     enabled: true
   },
   // TODO: 环境变量配置
@@ -74,11 +74,22 @@ export default defineNuxtConfig({
       database: process.env.NUXT_DB_DATABASE
     },
     ai: {
-      apiKey: process.env.NUXT_DEEPSEEK_API_KEY,
-      modelName: process.env.NUXT_MODEL_NAME,
+      apiKey: process.env.NUXT_API_KEY,
+      baseURL: process.env.NUXT_API_BASE_URL,
       systemPromptText: process.env.NUXT_MODEL_SYSTEM_PROMPT_TEXT,
+      doubaoSeedLite: process.env.NUXT_MODEL_DOUBAO_SEED_LITE,
+      doubaoSeedMini: process.env.NUXT_MODEL_DOUBAO_SEED_MINI,
+      glm52: process.env.NUXT_MODEL_GLM_5_2,
+      kimiK27Code: process.env.NUXT_MODEL_KIMI_K2_7_CODE,
+      deepseekV4Pro: process.env.NUXT_MODEL_DEEPSEEK_V4_PRO,
+      minimaxM3: process.env.NUXT_MODEL_MINIMAX_M3,
+      dobaoSeedEvolving: process.env.NUXT_MODEL_DOUBAO_SEED_EVOLVING,
+      kimiK3: process.env.NUXT_MODEL_KIMI_K3,
+      dobaoSeed21Turbo: process.env.NUXT_MODEL_DOUBAO_SEED_2_1_TURBO,
+      deepseekV4Flash: process.env.NUXT_MODEL_DEEPSEEK_V4_FLASH,
     }
   },
+  // TODO: vite配置
   vite: {
     // 关闭模块持久化缓存，根治长时间运行缓存卡死
     cacheDir: '.vite-cache',

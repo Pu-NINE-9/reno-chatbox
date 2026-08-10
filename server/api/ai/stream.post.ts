@@ -3,6 +3,8 @@ import { streamChat } from '~~/server/model'
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   const messages = body?.messages
+  const modelName = body?.modelName || 'deepseek-v4-pro'
+  console.log('[后端] 收到请求 → modelName:', modelName)
 
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return new Response(
@@ -23,7 +25,7 @@ export default defineEventHandler(async (event) => {
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        for await (const chunk of streamChat(messages)) {
+        for await (const chunk of streamChat(messages, modelName)) {
           const payload = `event: message\ndata: ${JSON.stringify({ content: chunk })}\n\n`
           controller.enqueue(encoder.encode(payload))
         }

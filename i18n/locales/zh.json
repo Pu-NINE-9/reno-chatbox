@@ -1,3 +1,7 @@
 {
-  "hello": "What's up~欢迎来到我们的Reno Chatbox，我是由Pu NINE开发的一款聊天助手，你可以和我进行任何的talk哦！我上知天文下知地理、无所不能嘿嘿唔嘿~"
+  "hello": "What's up~欢迎来到我们的Reno Chatbox，我是由Pu NINE开发的一款聊天助手，你可以和我进行任何的talk哦！我上知天文下知地理、无所不能嘿嘿唔嘿~",
+  "upload": {
+    "description": "点击或者拖拽上传文件或图片",
+    "btn": "上传"
+  }
 }

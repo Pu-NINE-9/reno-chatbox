@@ -1,18 +1,24 @@
-import { ChatDeepSeek } from '@langchain/deepseek'
+import { ChatOpenAI } from '@langchain/openai'
 import { StringOutputParser } from '@langchain/core/output_parsers'
 import type { BaseMessage } from '@langchain/core/messages'
 import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages'
 
 const config = useRuntimeConfig()
 
-const model = new ChatDeepSeek({
-  apiKey: config.ai.apiKey,
-  modelName: config.ai.modelName,
-  timeout: 60000, // 延长超时
-  verbose: true // 开启langchain内部详细日志，打印完整请求和响应
-})
-
 const parser = new StringOutputParser()
+
+function createModel(modelName: string) {
+  console.log('[Model] 创建实例 → modelName:', modelName, 'baseURL:', config.ai.baseURL)
+  return new ChatOpenAI({
+    apiKey: config.ai.apiKey,
+    modelName,
+    configuration: {
+      baseURL: config.ai.baseURL
+    },
+    timeout: 60000, // 开启延时
+    verbose: true // 开启langchain内部详细日志，打印完整请求和响应
+  })
+}
 
 function buildMessages(messages: Array<{ role: string; content: string }>): BaseMessage[] {
   const langchainMessages: BaseMessage[] = [new SystemMessage(config.ai.systemPromptText)]
@@ -28,14 +34,16 @@ function buildMessages(messages: Array<{ role: string; content: string }>): Base
   return langchainMessages
 }
 
-export async function invokeChat(messages: Array<{ role: string; content: string }>) {
+export async function invokeChat(messages: Array<{ role: string; content: string }>, modelName: string) {
+  const model = createModel(modelName)
   const langchainMessages = buildMessages(messages)
   const chain = model.pipe(parser)
   const response = await chain.invoke(langchainMessages)
   return response
 }
 
-export async function* streamChat(messages: Array<{ role: string; content: string }>) {
+export async function* streamChat(messages: Array<{ role: string; content: string }>, modelName: string) {
+  const model = createModel(modelName)
   const langchainMessages = buildMessages(messages)
   const chain = model.pipe(parser)
   const stream = await chain.stream(langchainMessages)

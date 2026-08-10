@@ -1,4 +1,7 @@
 {
-  "welcome": "Welcome",
-  "hello": "Hello, I am Reno Chatbox, how can I help you?"
+  "hello": "Hello, I am Reno Chatbox, how can I help you?",
+  "upload": {
+    "description": "Click or drag and drop files or images to upload them",
+    "btn": "Upload"
+  }
 }

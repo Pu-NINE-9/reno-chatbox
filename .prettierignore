@@ -1,9 +1,0 @@
-node_modules
-.nuxt
-.output
-.nitro
-dist
-coverage
-*.min.js
-pnpm-lock.yaml
-public

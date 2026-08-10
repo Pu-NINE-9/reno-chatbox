@@ -29,11 +29,10 @@ import { fetchEventSource } from '@microsoft/fetch-event-source'
   流式消息参数
 */
 interface StreamChatParams {
-  message: string
   messages: Array<{ role: string; content: string }>
-  useRag?: boolean
-  onMessage: (data: { content: string; isLoading: boolean }) => void
-  onComplete: (data: { answer: string }) => void
+  modelName: string
+  onMessage: (content: string) => void
+  onComplete: () => void
   onError: (error: Error) => void
 }
 
@@ -49,69 +48,67 @@ class StreamChat {
     发送流式消息（核心方法）
   */
   async chat(params: StreamChatParams) {
-    const { message, messages, useRag = false, onMessage, onComplete, onError } = params
+    const { messages, modelName, onMessage, onComplete, onError } = params
 
     this.abort()
 
     this.abortController = new AbortController()
     const signal = this.abortController.signal
 
-    let fullAnswer = ''
+    let fullContent = ''
 
     try {
-      const requestBody = JSON.stringify({
-        messages: [...messages, { role: 'user', content: message }],
-        temperature: 0.7,
-        maxTokens: 4096,
-        useRag,
-        ragTopK: 5
-      })
-
-      await fetchEventSource(import.meta.env.VITE_API_URL + '/api/chat/stream', {
+      await fetchEventSource('/api/ai/stream', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Encrypted': 'true'
+          Accept: 'text/event-stream'
         },
-        body: JSON.stringify({ payload }),
+        body: JSON.stringify({ messages, modelName }),
         signal,
         openWhenHidden: true,
-        credentials: 'omit',
 
         onopen: async (response) => {
           if (!response.ok) {
-            const errorText = await response.text()
-            throw new Error(`请求失败 ${response.status}: ${errorText}`)
+            throw new Error(`请求失败 ${response.status}`)
           }
-          return Promise.resolve()
         },
 
         onmessage: (event) => {
           try {
-            if (!event.data) return
-
-            // 后端返回的是纯文本流（token by token）
-            fullAnswer += event.data
-            onMessage({ content: fullAnswer, isLoading: true })
-          } catch (err) {
-            console.warn('解析 SSE 消息失败', err)
+            const data = JSON.parse(event.data)
+            if (event.event === 'message' && data.content) {
+              fullContent += data.content
+              onMessage(fullContent)
+            } else if (event.event === 'error') {
+              throw new Error(data.msg || '未知错误')
+            } else if (event.event === 'done') {
+              onComplete()
+            }
+          } catch (e) {
+            if (event.event !== 'done') {
+              console.warn('SSE parse error:', e)
+            }
           }
         },
 
         onclose: () => {
-          // 连接关闭表示消息发送完成
-          onMessage({ content: fullAnswer, isLoading: false })
-          onComplete({ answer: fullAnswer })
+          onComplete()
         },
 
         onerror: (err) => {
-          console.error('SSE 错误', err)
+          if (signal.aborted) {
+            return
+          }
+          console.error('SSE error:', err)
           onError(err as Error)
           throw err
         }
       })
     } catch (err) {
-      onError(err as Error)
+      if (!signal.aborted) {
+        onError(err as Error)
+      }
     }
   }
 
