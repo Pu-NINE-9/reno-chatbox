@@ -4,9 +4,10 @@ import streamChat from "~/utils/sse";
 
 const { getModelListResponse } = getResponse();
 
+const chatStore = useChatStore();
+
 const { t } = useI18n();
 
-// 初始化插件，配置明暗主题（和 Nuxt UI color-mode 自动同步）
 const plugins = [
   highlight("shiki", {
     themes: { light: "github-light", dark: "github-dark" },
@@ -20,24 +21,26 @@ interface ChatMessage {
 }
 
 const input = ref<string>("");
-const messages = ref<ChatMessage[]>([
-  {
-    id: "init",
-    role: "assistant",
-    parts: [
-      {
-        type: "text",
-        text: t("hello"),
-      },
-    ],
-  },
-]);
 const status = ref<"submitted" | "streaming" | "ready" | "error">("ready");
+
+const messages = computed<ChatMessage[]>({
+  get: () => chatStore.messages,
+  set: (val) => chatStore.setMessages(val),
+});
 
 async function onSubmit() {
   const text = input.value.trim();
   if (!text || status.value === "streaming" || status.value === "submitted") return;
   input.value = "";
+
+  let conversationId = chatStore.currentConversationId;
+  if (!conversationId) {
+    conversationId = await chatStore.createConversation(modelName.value);
+    if (!conversationId) {
+      status.value = "error";
+      return;
+    }
+  }
 
   const userMsg: ChatMessage = {
     id: Date.now().toString(),
@@ -47,11 +50,9 @@ async function onSubmit() {
   messages.value.push(userMsg);
 
   const assistantId = (Date.now() + 1).toString();
-
   status.value = "submitted";
 
   const historyMessages = messages.value
-    .filter((m) => m.id !== "init")
     .map((m) => ({
       role: m.role,
       content: m.parts.map((p) => p.text).join(""),
@@ -62,6 +63,7 @@ async function onSubmit() {
   await streamChat.chat({
     messages: historyMessages,
     modelName: modelName.value,
+    conversationId,
     onMessage: (content) => {
       if (status.value === "submitted") {
         msg = {
@@ -71,6 +73,7 @@ async function onSubmit() {
         };
         messages.value.push(msg);
         status.value = "streaming";
+        chatStore.streaming = true;
       } else if (msg && msg.parts[0]) {
         msg.parts[0].text = content;
       }
@@ -85,9 +88,12 @@ async function onSubmit() {
         messages.value.push(msg);
       }
       status.value = "ready";
+      chatStore.streaming = false;
+      chatStore.fetchConversations();
     },
     onError: (err) => {
       status.value = "error";
+      chatStore.streaming = false;
       if (!msg) {
         msg = {
           id: assistantId,
@@ -110,6 +116,14 @@ async function onSubmit() {
 function onStop() {
   streamChat.abort();
   status.value = "ready";
+  chatStore.streaming = false;
+}
+
+async function newChat() {
+  if (status.value === "streaming" || status.value === "submitted") return;
+  streamChat.abort();
+  status.value = "ready";
+  await chatStore.createConversation(modelName.value);
 }
 
 const modelName = ref("");
@@ -143,7 +157,23 @@ onMounted(async () => {
       modelName.value = modelList.value[0].value;
     }
   }
+
+  await chatStore.fetchConversations();
+
+  if (chatStore.currentConversationId) {
+    await chatStore.switchConversation(chatStore.currentConversationId);
+  }
 });
+
+watch(
+  () => chatStore.currentConversationId,
+  async (newId, oldId) => {
+    if (!newId || newId === oldId) return;
+    if (status.value === "streaming" || status.value === "submitted") return;
+    if (chatStore.loading) return;
+    await chatStore.switchConversation(newId);
+  }
+);
 </script>
 
 <template>
@@ -191,7 +221,6 @@ onMounted(async () => {
       </template>
     </UChatMessages>
 
-    <!-- 输入框部分 -->
     <div class="flex justify-center align-center">
       <UChatPrompt
         v-model="input"

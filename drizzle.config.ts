@@ -1,16 +1,16 @@
 import { defineConfig } from 'drizzle-kit'
-
-const config = useRuntimeConfig()
+import dotenv from "dotenv"
+dotenv.config()
 
 export default defineConfig({
   dialect: 'mysql',
   schema: './server/db/schema.ts',
   out: './drizzle/migrations',
   dbCredentials: {
-    host: config.db.host,
-    port: Number(config.db.port),
-    user: config.db.user,
-    password: config.db.password,
-    database: config.db.database
+    host: process.env.NUXT_DB_HOST,
+    port: Number(process.env.NUXT_DB_PORT),
+    user: process.env.NUXT_DB_USER,
+    password: process.env.NUXT_DB_PASSWORD,
+    database: process.env.NUXT_DB_DATABASE
   }
 })

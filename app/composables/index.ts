@@ -21,6 +21,10 @@ export const getResponse = () => {
     }
   };
 
+  /**
+   * 获取模型列表
+   * @returns 模型列表
+   */
   const getModelListResponse = async () => {
     try {
       const { data } = await $fetch("/api/ai", {
@@ -33,9 +37,24 @@ export const getResponse = () => {
     }
   };
 
+  /**
+   * 获取上传的文件列表
+   * @returns 上传的文件列表
+   */
+  const getUploadedFilesList = async () => {
+    try {
+      const { data } = await $fetch("/api/upload")
+      return data
+    } catch (err) {
+      console.error((err as Error)?.message)
+      return null
+    }
+  }
+
   return {
     getUserResponse,
     getAIResponse,
     getModelListResponse,
+    getUploadedFilesList,
   };
 };

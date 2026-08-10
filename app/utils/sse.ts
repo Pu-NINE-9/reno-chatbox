@@ -31,6 +31,7 @@ import { fetchEventSource } from '@microsoft/fetch-event-source'
 interface StreamChatParams {
   messages: Array<{ role: string; content: string }>
   modelName: string
+  conversationId?: number | null
   onMessage: (content: string) => void
   onComplete: () => void
   onError: (error: Error) => void
@@ -48,7 +49,7 @@ class StreamChat {
     发送流式消息（核心方法）
   */
   async chat(params: StreamChatParams) {
-    const { messages, modelName, onMessage, onComplete, onError } = params
+    const { messages, modelName, conversationId, onMessage, onComplete, onError } = params
 
     this.abort()
 
@@ -64,7 +65,7 @@ class StreamChat {
           'Content-Type': 'application/json',
           Accept: 'text/event-stream'
         },
-        body: JSON.stringify({ messages, modelName }),
+        body: JSON.stringify({ messages, modelName, conversationId }),
         signal,
         openWhenHidden: true,
 

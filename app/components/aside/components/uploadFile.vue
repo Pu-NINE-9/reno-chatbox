@@ -1,83 +1,43 @@
 <script setup lang="ts">
-import { uploadFileAPI } from '~/composables/uploadFile'
-
+import type { FileInfo } from "~~/server/api/upload/index.post"
 const { t } = useI18n()
-const toast = useToast()
+const { getUploadedFilesList } = getResponse()
 
+// 加载文件列表
+const fileList = ref<Array<FileInfo>>([])
+
+const getFileList = async () => {
+  const { data } = await getUploadedFilesList()
+  console.log(data)
+  if (data) fileList.value = data
+}
+
+onMounted(async () => {
+  await getFileList()
+})
+
+// 文件上传逻辑
 const uploadFile = ref<File | null>(null)
-const isUploading = ref<boolean>(false)
+const isUploading = ref(false)
 
-async function handleClickUpload() {
-  if (isUploading.value) return
-  if (!uploadFile.value) {
-    toast.add({
-      title: "请先选择文件",
-      color: "error",
-      duration: 3000,
-    })
-    return
-  }
-
-  let toastId: string | number | null = null
+// 处理文件上传
+const handleClickUpload = async () => {
+  if (!uploadFile.value) throw new Error("No file selected")
 
   try {
     isUploading.value = true
+    const fd = new FormData()
 
-    await uploadFileAPI(uploadFile.value, (status, percent) => {
-      switch (status) {
-        case 'start':
-          // 开启上传，持久toast，不会自动关闭
-          const toastRes = toast.add({
-            title: '正在上传文件',
-            description: '文件分片传输中…',
-            icon: 'i-lucide-cloud-upload',
-            color: 'info',
-            duration: 0,
-          })
-          toastId = toastRes.id
-          break
-
-        case 'progress':
-          if (toastId !== null && percent !== undefined) {
-            toast.update(toastId, {
-              title: `正在上传文件 ${percent}%`
-            })
-          }
-          break
-
-        case 'success':
-          if (toastId !== null) {
-            toast.update(toastId, {
-              title: '✅ tus分片上传完成',
-              description: '仅保存临时分片，未拷贝至public/uploads',
-              icon: 'i-lucide-check',
-              color: 'success',
-              duration: 3500
-            })
-          }
-          uploadFile.value = null // 清空预览图效果
-          break
-
-        case 'error':
-          if (toastId !== null) {
-            toast.update(toastId, {
-              title: '文件上传失败！',
-              description: '分片传输发生错误！',
-              icon: 'i-lucide-x',
-              color: 'error',
-              duration: 3500
-            })
-          }
-          break
-      }
+    fd.append("file", uploadFile.value)
+    const res = await $fetch("/api/upload", {
+      method: "POST",
+      body: fd,
     })
-  } catch (err) {
-    console.error('上传出错', err)
-    toast.add({
-      title: '上传异常',
-      color: 'error',
-      duration: 3500
-    })
+    
+    await getFileList() // 上传成功后重新渲染文件列表
+    uploadFile.value = null // 清空
+  } catch (error) {
+    console.error((error as Error)?.message)
   } finally {
     isUploading.value = false
   }
@@ -85,6 +45,7 @@ async function handleClickUpload() {
 </script>
 
 <template>
+  <!-- 文件上传 -->
   <ClientOnly>
     <UFileUpload
       v-model="uploadFile"
@@ -104,4 +65,24 @@ async function handleClickUpload() {
       @click="handleClickUpload"
     />
   </ClientOnly>
+
+  <!-- 文件列表 -->
+  <div class="w-full flex flex-col">
+    <!-- 做了无限滚动 -->
+    <UScrollArea
+      class="w-full h-[160px] mt-4"
+      shadow
+      virtualize
+      :key="fileList.length"
+      :items="fileList"
+      v-slot="{ item, index }"
+    >
+      <UPageCard
+        :variant="index % 2 === 0 ? 'soft' : 'outline'"
+        class="rounded-none"
+      >
+        {{ item.filename }} {{ item.suffix }}
+      </UPageCard>
+    </UScrollArea>
+  </div>
 </template>

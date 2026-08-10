@@ -1,5 +1,14 @@
 {
   "hello": "Hello, I am Reno Chatbox, how can I help you?",
+  "newChat": "New Chat",
+  "noConversations": "No conversations yet. Click the button above to start a new chat",
+  "time": {
+    "justNow": "just now",
+    "minutesAgo": "m ago",
+    "hoursAgo": "h ago",
+    "yesterday": "Yesterday",
+    "daysAgo": "d ago"
+  },
   "upload": {
     "description": "Click or drag and drop files or images to upload them",
     "btn": "Upload"

@@ -1,5 +1,14 @@
 {
   "hello": "What's up~欢迎来到我们的Reno Chatbox，我是由Pu NINE开发的一款聊天助手，你可以和我进行任何的talk哦！我上知天文下知地理、无所不能嘿嘿唔嘿~",
+  "newChat": "新建对话",
+  "noConversations": "暂无对话记录，点击上方按钮开始新对话",
+  "time": {
+    "justNow": "刚刚",
+    "minutesAgo": "分钟前",
+    "hoursAgo": "小时前",
+    "yesterday": "昨天",
+    "daysAgo": "天前"
+  },
   "upload": {
     "description": "点击或者拖拽上传文件或图片",
     "btn": "上传"
