@@ -1,104 +1,149 @@
 <script setup lang="ts">
-import highlight from '@comark/nuxt/plugins/highlight'
-import streamChat from '~/utils/sse'
+import highlight from "@comark/nuxt/plugins/highlight";
+import streamChat from "~/utils/sse";
 
-const { getModelListResponse } = getResponse()
+const { getModelListResponse } = getResponse();
 
-const { t } = useI18n()
+const { t } = useI18n();
 
 // 初始化插件，配置明暗主题（和 Nuxt UI color-mode 自动同步）
 const plugins = [
-  highlight('shiki', {
-    themes: { light: 'github-light', dark: 'github-dark' }
-  })
-]
+  highlight("shiki", {
+    themes: { light: "github-light", dark: "github-dark" },
+  }),
+];
 
 interface ChatMessage {
-  id: string
-  role: 'user' | 'assistant'
-  parts: Array<{ type: 'text'; text: string }>
+  id: string;
+  role: "user" | "assistant";
+  parts: Array<{ type: "text"; text: string }>;
 }
 
-const input = ref<string>('')
+const input = ref<string>("");
 const messages = ref<ChatMessage[]>([
   {
-    id: 'init',
-    role: 'assistant',
+    id: "init",
+    role: "assistant",
     parts: [
       {
-        type: 'text',
-        text: t('hello')
-      }
-    ]
-  }
-])
-const status = ref<'streaming' | 'ready' | 'error'>('ready')
+        type: "text",
+        text: t("hello"),
+      },
+    ],
+  },
+]);
+const status = ref<"submitted" | "streaming" | "ready" | "error">("ready");
 
 async function onSubmit() {
-  const text = input.value.trim()
-  if (!text || status.value === 'streaming') return
-  input.value = ''
+  const text = input.value.trim();
+  if (!text || status.value === "streaming" || status.value === "submitted") return;
+  input.value = "";
 
   const userMsg: ChatMessage = {
     id: Date.now().toString(),
-    role: 'user',
-    parts: [{ type: 'text', text }]
-  }
-  messages.value.push(userMsg)
+    role: "user",
+    parts: [{ type: "text", text }],
+  };
+  messages.value.push(userMsg);
 
-  const assistantId = (Date.now() + 1).toString()
-  const assistantMsg: ChatMessage = {
-    id: assistantId,
-    role: 'assistant',
-    parts: [{ type: 'text', text: '' }]
-  }
-  messages.value.push(assistantMsg)
+  const assistantId = (Date.now() + 1).toString();
 
-  status.value = 'streaming'
+  status.value = "submitted";
 
   const historyMessages = messages.value
-    .filter((m) => m.id !== 'init' && m.id !== assistantId)
+    .filter((m) => m.id !== "init")
     .map((m) => ({
       role: m.role,
-      content: m.parts.map((p) => p.text).join('')
-    }))
+      content: m.parts.map((p) => p.text).join(""),
+    }));
 
-  const msg = messages.value.find((m) => m.id === assistantId)
+  let msg: ChatMessage | null = null;
 
   await streamChat.chat({
     messages: historyMessages,
     modelName: modelName.value,
     onMessage: (content) => {
-      if (msg && msg.parts[0]) {
-        msg.parts[0].text = content
+      if (status.value === "submitted") {
+        msg = {
+          id: assistantId,
+          role: "assistant",
+          parts: [{ type: "text", text: content }],
+        };
+        messages.value.push(msg);
+        status.value = "streaming";
+      } else if (msg && msg.parts[0]) {
+        msg.parts[0].text = content;
       }
     },
     onComplete: () => {
-      if (status.value === 'streaming') {
-        status.value = 'ready'
+      if (!msg) {
+        msg = {
+          id: assistantId,
+          role: "assistant",
+          parts: [{ type: "text", text: "(空响应)" }],
+        };
+        messages.value.push(msg);
       }
+      status.value = "ready";
     },
     onError: (err) => {
-      status.value = 'error'
-      if (msg && msg.parts[0] && !msg.parts[0].text) {
-        msg.parts[0].text = `调用 AI 接口失败：${err?.message || '网络异常，请稍后重试'}`
+      status.value = "error";
+      if (!msg) {
+        msg = {
+          id: assistantId,
+          role: "assistant",
+          parts: [
+            {
+              type: "text",
+              text: `调用 AI 接口失败：${err?.message || "网络异常，请稍后重试"}`,
+            },
+          ],
+        };
+        messages.value.push(msg);
+      } else if (msg && msg.parts[0] && !msg.parts[0].text) {
+        msg.parts[0].text = `调用 AI 接口失败：${err?.message || "网络异常，请稍后重试"}`;
       }
-    }
-  })
+    },
+  });
 }
 
-const modelName = ref('')
-const modelList = ref<{ label: string; value: string }[]>([])
+function onStop() {
+  streamChat.abort();
+  status.value = "ready";
+}
+
+const modelName = ref("");
+const modelList = ref<{ label: string; value: string; icon: string }[]>([]);
+
+function getModelIcon(name: string): string {
+  if (name.includes("doubao")) return "i-simple-icons-bytedance";
+  if (name.includes("deepseek")) return "i-simple-icons-deepseek";
+  if (name.includes("glm")) return "i-simple-icons-zhipuai";
+  if (name.includes("kimi")) return "i-simple-icons-moonshotai";
+  if (name.includes("minimax")) return "i-simple-icons-minimax";
+  return "i-lucide-cpu";
+}
+
+const currentModelIcon = computed(() => {
+  return (
+    modelList.value.find((item) => item.value === modelName.value)?.icon ||
+    "i-lucide-cpu"
+  );
+});
 
 onMounted(async () => {
-  const res = await getModelListResponse()
+  const res = await getModelListResponse();
   if (res?.modelNames) {
-    modelList.value = res.modelNames.map((name: string) => ({ label: name, value: name }))
+    modelList.value = res.modelNames.map((name: string) => ({
+      label: name,
+      value: name,
+      icon: getModelIcon(name),
+    }));
     if (modelList.value.length > 0 && !modelName.value) {
-      modelName.value = modelList.value[0].value
+      modelName.value = modelList.value[0].value;
     }
   }
-})
+});
 </script>
 
 <template>
@@ -108,7 +153,7 @@ onMounted(async () => {
       :auto-scroll="{
         size: 'lg',
         color: 'neutral',
-        variant: 'outline'
+        variant: 'outline',
       }"
       :messages="messages"
       :status="status"
@@ -116,16 +161,19 @@ onMounted(async () => {
       :should-scroll-to-bottom="true"
       :user="{
         side: 'right',
-        variant: 'soft'
+        variant: 'soft',
       }"
       :assistant="{
         side: 'left',
         variant: 'soft',
-        icon: 'i-lucide-bot'
+        icon: 'i-lucide-bot',
       }"
     >
       <template #content="{ message }">
-        <template v-for="(part, index) in message.parts" :key="`${message.id}-${index}`">
+        <template
+          v-for="(part, index) in message.parts"
+          :key="`${message.id}-${index}`"
+        >
           <Comark
             v-if="message.role === 'assistant' && part.type === 'text'"
             :markdown="part.text"
@@ -133,48 +181,52 @@ onMounted(async () => {
             streaming
             class="*:first:mt-0 *:last:mb-0"
           />
-          <p v-else-if="part.type === 'text'" class="whitespace-pre-wrap leading-6">
+          <p
+            v-else-if="part.type === 'text'"
+            class="whitespace-pre-wrap leading-6"
+          >
             {{ part.text }}
           </p>
         </template>
       </template>
     </UChatMessages>
 
-    <!-- 输入框整体区域 -->
-    <UChatPalette class="shrink-0" style="flex: none">
-      
-      <!-- 模型列表 -->
-      <div class="flex justify-center w-full">
-        <USelectMenu
-          v-model="modelName"
-          value-key="value"
-          :items="modelList"
-          placeholder="请选择模型"
-          class="w-4/5"
-        />
-      </div>
-      
-      <!-- 输入框区域 -->
-      <template #prompt>
-        <div class="flex justify-center w-full">
-          <div class="flex w-4/5 align-center justify-center">
-            <UChatPrompt
-              v-model="input"
-              icon="i-lucide-send"
-              variant="naked"
-              :loading="status === 'streaming'"
-              @submit="onSubmit"
+    <!-- 输入框部分 -->
+    <div class="flex justify-center align-center">
+      <UChatPrompt
+        v-model="input"
+        icon="i-lucide-send"
+        variant="naked"
+        :loading="status === 'streaming' || status === 'submitted'"
+        :disabled="status === 'streaming' || status === 'submitted'"
+        @submit="onSubmit"
+        class="shrink-0 border-2 border-[var(--ui-primary)] hover:border-white w-4/5"
+      >
+        <template #footer>
+          <div>rag预留区</div>
+
+          <div class="flex items-center gap-1.5">
+            <USelect
+              v-model="modelName"
+              :items="modelList"
+              :icon="currentModelIcon"
+              value-key="value"
+              variant="ghost"
+              size="sm"
+              square
+              :disabled="status === 'streaming' || status === 'submitted'"
             />
+
             <UChatPromptSubmit
-              color="primary"
-              class="hover:cursor-pointer"
-              variant="solid"
-              icon="i-lucide-arrow-up"
-              @click="onSubmit"
+              size="sm"
+              :status="status"
+              @submit="onSubmit"
+              @stop="onStop"
+              @reload="onSubmit"
             />
           </div>
-        </div>
-      </template>
-    </UChatPalette>
+        </template>
+      </UChatPrompt>
+    </div>
   </div>
 </template>
