@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import type { FileInfo } from "~~/server/api/upload/index.post"
+
 const { t } = useI18n()
 const { getUploadedFilesList } = getResponse()
+const confirm = useConfirmDialog() // 确认消息框相关
+const toast = useToast() // 消息提示弹窗相关
 
 // 加载文件列表
 const fileList = ref<Array<FileInfo>>([])
 
 const getFileList = async () => {
   const { data } = await getUploadedFilesList()
-  console.log(data)
   if (data) fileList.value = data
 }
 
@@ -36,12 +38,44 @@ const handleClickUpload = async () => {
     
     await getFileList() // 上传成功后重新渲染文件列表
     uploadFile.value = null // 清空
+
+    // 上传成功弹窗
+    toast.add({
+      title: '✅ Upload Success',
+      description: 'File uploaded successfully!',
+      color: 'success',
+      duration: 2000,
+    })
+    
   } catch (error) {
     console.error((error as Error)?.message)
+    // 上传失败弹窗
+    toast.add({
+      title: '❌ Upload Failed',
+      description: (error as Error)?.data?.msg || 'Failed to upload!',
+      color: 'error',
+      duration: 2000,
+    })
+    uploadFile.value = null // 清空
+
   } finally {
     isUploading.value = false
+    uploadFile.value = null // 清空
   }
 }
+
+
+const handleOpenConfirmWindow = async () => {
+  const confirmed = await confirm({
+    title: 'Upload File',
+    description: 'Are you sure you want to upload this file?'
+  })
+
+  if (confirmed) {
+    await handleClickUpload()
+  }
+}
+
 </script>
 
 <template>
@@ -62,7 +96,7 @@ const handleClickUpload = async () => {
       :loading="isUploading"
       variant="outline"
       :label="t('upload.btn')"
-      @click="handleClickUpload"
+      @click="handleOpenConfirmWindow"
     />
   </ClientOnly>
 

@@ -19,6 +19,6 @@ export default defineEventHandler(async (event) => {
   try {
     return successAPI({ modelNames: MODEL_NAME_LIST })
   } catch (error) {
-    return failAPI((error as Error).message)
+    return failAPI(event, (error as Error).message)
   }
 })

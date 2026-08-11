@@ -10,6 +10,6 @@ export default defineEventHandler(async (event) => {
     return successAPI(res)
   } catch (err) {
     globalThis.console.error('❌ 数据库查询失败：', (err as Error).message)
-    return failAPI((err as Error).message)
+    return failAPI(event, (err as Error).message || '数据库查询失败')
   }
 })

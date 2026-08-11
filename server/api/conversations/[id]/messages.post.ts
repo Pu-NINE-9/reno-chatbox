@@ -6,12 +6,12 @@ import { eq } from 'drizzle-orm'
 export default defineEventHandler(async (event) => {
   try {
     const id = Number(event.context.params?.id)
-    if (!id) return failAPI('参数错误')
+    if (!id) return failAPI(event, '参数错误')
 
     const body = await readBody(event)
     const items = body?.messages
     if (!Array.isArray(items) || !items.length) {
-      return failAPI('消息内容不能为空')
+      return failAPI(event, '消息内容不能为空')
     }
 
     const values = items.map((m: { role: string; content: string }) => ({
@@ -34,6 +34,6 @@ export default defineEventHandler(async (event) => {
     return successAPI(null, '保存成功')
   } catch (err) {
     console.error('❌ 保存消息失败：', (err as Error).message)
-    return failAPI((err as Error).message)
+    return failAPI(event, (err as Error).message || '保存消息失败')
   }
 })

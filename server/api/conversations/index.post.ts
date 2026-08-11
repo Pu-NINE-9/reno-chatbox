@@ -16,6 +16,6 @@ export default defineEventHandler(async (event) => {
     return successAPI({ id: Number(result.insertId), title, modelName }, '创建成功')
   } catch (err) {
     console.error('❌ 创建对话失败：', (err as Error).message)
-    return failAPI((err as Error).message)
+    return failAPI(event, (err as Error).message || '创建对话失败')
   }
 })

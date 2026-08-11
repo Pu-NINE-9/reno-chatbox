@@ -6,14 +6,14 @@ import { eq, asc } from 'drizzle-orm'
 export default defineEventHandler(async (event) => {
   try {
     const id = Number(event.context.params?.id)
-    if (!id) return failAPI('参数错误')
+    if (!id) return failAPI(event, '参数错误')
 
     const conv = await db
       .select()
       .from(conversations)
       .where(eq(conversations.id, id))
       .limit(1)
-    if (!conv.length) return failAPI('对话不存在')
+    if (!conv.length) return failAPI(event, '对话不存在')
 
     const msgs = await db
       .select()
@@ -24,6 +24,6 @@ export default defineEventHandler(async (event) => {
     return successAPI({ conversation: conv[0], messages: msgs })
   } catch (err) {
     console.error('❌ 获取对话详情失败：', (err as Error).message)
-    return failAPI((err as Error).message)
+    return failAPI(event, (err as Error).message || '获取对话详情失败')
   }
 })

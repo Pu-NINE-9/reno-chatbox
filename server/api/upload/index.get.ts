@@ -15,6 +15,6 @@ export default defineEventHandler(async (event) => {
       msg: "获取上传文件列表成功",
     })
   } catch (error) {
-    return failAPI((error as Error)?.message || "获取上传文件列表失败")
+    return failAPI(event, (error as Error)?.message || "获取上传文件列表失败")
   }
 })

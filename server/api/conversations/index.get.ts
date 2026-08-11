@@ -3,7 +3,7 @@ import { conversations } from '~~/server/db/schema'
 import { db } from '~~/server/db'
 import { desc } from 'drizzle-orm'
 
-export default defineEventHandler(async () => {
+export default defineEventHandler(async (event) => {
   try {
     const list = await db
       .select()
@@ -12,6 +12,6 @@ export default defineEventHandler(async () => {
     return successAPI(list)
   } catch (err) {
     console.error('❌ 获取对话列表失败：', (err as Error).message)
-    return failAPI((err as Error).message)
+    return failAPI(event, (err as Error).message || '获取对话列表失败')
   }
 })
