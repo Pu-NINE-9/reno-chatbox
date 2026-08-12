@@ -51,10 +51,25 @@ export const getResponse = () => {
     }
   }
 
+  /**
+   * 删除已上传的文件
+   * @param id 文件ID
+   */
+  const deleteUploadedFile = async (id: number) => {
+    try {
+      await $fetch(`/api/upload/${id}`, { method: 'DELETE' })
+      return true
+    } catch (err) {
+      console.error((err as Error)?.message)
+      return false
+    }
+  }
+
   return {
     getUserResponse,
     getAIResponse,
     getModelListResponse,
     getUploadedFilesList,
+    deleteUploadedFile,
   };
 };

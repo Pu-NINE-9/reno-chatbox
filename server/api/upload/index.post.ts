@@ -37,10 +37,7 @@ export default defineEventHandler(async (event) => {
       rawText: rawText
     })
 
-    return successAPI({
-      data: insertResult,
-      msg: "文件上传保存成功",
-    })
+    return successAPI(insertResult, "文件上传保存成功", event)
   } catch (error) {
     return failAPI(event, (error as Error)?.message || "文件上传保存失败")
   }

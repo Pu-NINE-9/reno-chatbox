@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
       .select()
       .from(conversations)
       .orderBy(desc(conversations.updatedAt))
-    return successAPI(list)
+    return successAPI(list, '获取对话列表成功', event)
   } catch (err) {
     console.error('❌ 获取对话列表失败：', (err as Error).message)
     return failAPI(event, (err as Error).message || '获取对话列表失败')

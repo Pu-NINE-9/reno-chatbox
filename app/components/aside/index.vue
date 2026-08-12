@@ -5,7 +5,7 @@ import asideBottom from './components/asideBottom.vue'
 </script>
 
 <template>
-  <aside class="hidden lg:flex w-56 shrink-0 h-full flex-col border-r-2 border-[var(--ui-primary)]">
+  <aside class="hidden lg:flex w-60 shrink-0 h-full flex-col border-r-2 border-[var(--ui-primary)]">
     <!-- 顶部slogan -->
      <asideTop />
 

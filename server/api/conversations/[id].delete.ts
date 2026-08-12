@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
     await db.delete(messages).where(eq(messages.conversationId, id))
     await db.delete(conversations).where(eq(conversations.id, id))
 
-    return successAPI(null, '删除成功')
+    return successAPI(null, '删除成功', event)
   } catch (err) {
     console.error('❌ 删除对话失败：', (err as Error).message)
     return failAPI(event, (err as Error).message)

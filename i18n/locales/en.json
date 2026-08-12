@@ -12,5 +12,7 @@
   "upload": {
     "description": "Click or drag and drop files or images to upload them",
     "btn": "Upload"
-  }
+  },
+  "deleteFile": "Delete File",
+  "noFiles": "No files yet, please upload"
 }

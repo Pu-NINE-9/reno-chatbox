@@ -38,12 +38,11 @@ export default defineEventHandler(async (event) => {
 
         if (conversationId) {
           try {
-            const userMsg = messagesBody.find((m: any) => m.role === 'user')
-            if (userMsg) {
+            if (lastUserMsg) {
               await db.insert(messages).values({
                 conversationId,
                 role: 'user',
-                content: userMsg.content
+                content: lastUserMsg.content
               }).execute()
             }
             if (fullAssistantContent) {

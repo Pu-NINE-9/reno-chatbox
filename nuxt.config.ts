@@ -94,6 +94,10 @@ export default defineNuxtConfig({
     // 关闭模块持久化缓存，根治长时间运行缓存卡死
     cacheDir: '.vite-cache',
     server: {
+      hmr: {
+        protocol: 'ws',
+        host: 'localhost'
+      },
       // Windows 修复文件监听失效
       watch: {
         usePolling: true, // 轮询模式！解决Windows chokidar监听丢失

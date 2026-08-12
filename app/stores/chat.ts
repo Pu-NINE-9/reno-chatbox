@@ -31,6 +31,7 @@ export const useChatStore = defineStore('chat', () => {
   const messages = ref<ChatMessage[]>([])
   const loading = ref(false)
   const streaming = ref(false)
+  const skipSwitch = ref(false)
 
   const canSwitchConversation = computed(() => !loading.value && !streaming.value)
 
@@ -51,13 +52,15 @@ export const useChatStore = defineStore('chat', () => {
       })
       const data = res?.data
       if (data?.id) {
-        currentConversationId.value = data.id
-        messages.value = []
+        skipSwitch.value = true
+        await switchConversation(data.id)
+        skipSwitch.value = false
         await fetchConversations()
         return data.id
       }
       return null
     } catch (err) {
+      skipSwitch.value = false
       console.error('创建对话失败:', err)
       return null
     }
@@ -87,11 +90,14 @@ export const useChatStore = defineStore('chat', () => {
     try {
       await $fetch(`/api/conversations/${id}`, { method: 'DELETE' })
       if (currentConversationId.value === id) {
+        skipSwitch.value = true
         currentConversationId.value = null
         messages.value = []
+        skipSwitch.value = false
       }
       await fetchConversations()
     } catch (err) {
+      skipSwitch.value = false
       console.error('删除对话失败:', err)
     }
   }
@@ -101,8 +107,10 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   function clearCurrentConversation() {
+    skipSwitch.value = true
     currentConversationId.value = null
     messages.value = []
+    skipSwitch.value = false
   }
 
   return {
@@ -111,6 +119,7 @@ export const useChatStore = defineStore('chat', () => {
     messages,
     loading,
     streaming,
+    skipSwitch,
     canSwitchConversation,
     fetchConversations,
     createConversation,

@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
       .where(eq(messages.conversationId, id))
       .orderBy(asc(messages.createdAt))
 
-    return successAPI({ conversation: conv[0], messages: msgs })
+    return successAPI({ conversation: conv[0], messages: msgs }, '获取对话详情成功', event)
   } catch (err) {
     console.error('❌ 获取对话详情失败：', (err as Error).message)
     return failAPI(event, (err as Error).message || '获取对话详情失败')

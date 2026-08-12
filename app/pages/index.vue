@@ -171,6 +171,7 @@ watch(
     if (!newId || newId === oldId) return;
     if (status.value === "streaming" || status.value === "submitted") return;
     if (chatStore.loading) return;
+    if (chatStore.skipSwitch) return;
     await chatStore.switchConversation(newId);
   }
 );
@@ -179,7 +180,7 @@ watch(
 <template>
   <div class="flex flex-col h-full min-h-0">
     <UChatMessages
-      class="flex-1 min-h-0 overflow-auto pl-34 pr-34"
+      class="flex-1 min-h-0 overflow-auto pl-34 pr-34 pb-16"
       :auto-scroll="{
         size: 'lg',
         color: 'neutral',
@@ -221,7 +222,7 @@ watch(
       </template>
     </UChatMessages>
 
-    <div class="flex justify-center align-center">
+    <div class="mt-10 flex justify-center align-center">
       <UChatPrompt
         v-model="input"
         icon="i-lucide-send"
@@ -231,6 +232,7 @@ watch(
         @submit="onSubmit"
         class="shrink-0 border-2 border-[var(--ui-primary)] hover:border-white w-4/5"
       >
+        <!-- 输入框下半部分区域 -->
         <template #footer>
           <div>rag预留区</div>
 
@@ -259,3 +261,10 @@ watch(
     </div>
   </div>
 </template>
+
+<style scoped>
+/* 样式穿透 */
+:deep([data-slot="autoScroll"]) {
+  bottom: 4rem !important;
+}
+</style>

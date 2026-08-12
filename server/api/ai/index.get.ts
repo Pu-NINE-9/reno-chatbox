@@ -17,7 +17,7 @@ export const MODEL_NAME_LIST = [
 
 export default defineEventHandler(async (event) => {
   try {
-    return successAPI({ modelNames: MODEL_NAME_LIST })
+    return successAPI({ modelNames: MODEL_NAME_LIST }, '获取模型列表成功', event)
   } catch (error) {
     return failAPI(event, (error as Error).message)
   }

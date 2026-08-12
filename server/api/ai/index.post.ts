@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const res = await invokeChat(messages)
-    return successAPI(res)
+    return successAPI(res, 'AI 服务调用成功', event)
   } catch (err) {
     console.error((err as Error)?.message)
     return failAPI(event, (err as Error)?.message || 'AI 服务调用失败')

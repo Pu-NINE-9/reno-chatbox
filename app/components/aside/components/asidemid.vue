@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
-
 const chatStore = useChatStore()
 const { t } = useI18n()
+const confirm = useConfirmDialog()
+const toast = useToast()
 
 const confirmingId = ref<number | null>(null)
 const expandingId = ref<number | null>(null)
+const creating = ref(false)
 
 const menuItems = computed(() => {
   return chatStore.conversations.map((conv) => ({
@@ -54,8 +55,35 @@ async function handleSelect(item: { id: number }) {
 }
 
 async function handleNew() {
-  if (!chatStore.canSwitchConversation) return
-  await chatStore.createConversation('')
+  if (!chatStore.canSwitchConversation || creating.value) return
+
+  const confirmed = await confirm({
+    title: t('newChat'),
+    description: '确定要创建一个新的对话吗？'
+  })
+  if (!confirmed) return
+
+  creating.value = true
+  try {
+    const newId = await chatStore.createConversation('')
+    if (newId) {
+      toast.add({
+        title: t('newChat'),
+        description: '创建成功',
+        color: 'success',
+        duration: 2000
+      })
+    } else {
+      toast.add({
+        title: t('newChat'),
+        description: '创建失败',
+        color: 'error',
+        duration: 2000
+      })
+    }
+  } finally {
+    creating.value = false
+  }
 }
 
 function handleDelete(id: number) {
@@ -82,6 +110,7 @@ onMounted(async () => {
         size="sm"
         block
         icon="i-lucide-plus"
+        :loading="creating"
         @click="handleNew"
       >
         {{ t('newChat') }}

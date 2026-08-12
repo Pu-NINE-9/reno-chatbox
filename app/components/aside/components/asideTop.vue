@@ -5,7 +5,7 @@ import logoImg from '~/assets/img/website-slogan.png'
 
 <template>
   <div
-    class="flex items-center justify-center w-full h-[100px] border-0 border-b-2 border-[var(--ui-primary)]"
+    class="flex items-center justify-center w-full h-[95px] border-0 border-b-2 border-[var(--ui-primary)]"
   >
     <img
       title="Reno ChatBox"

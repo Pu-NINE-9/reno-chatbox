@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
         .where(eq(conversations.id, id))
     }
 
-    return successAPI(null, '保存成功')
+    return successAPI(null, '保存成功', event)
   } catch (err) {
     console.error('❌ 保存消息失败：', (err as Error).message)
     return failAPI(event, (err as Error).message || '保存消息失败')
