@@ -2,12 +2,12 @@
 import highlight from "@comark/nuxt/plugins/highlight";
 import streamChat from "~/utils/sse";
 
-const { getModelListResponse } = getResponse();
+const { getModelListResponse } = getResponse() // 获取模型列表
+const chatStore = useChatStore() // 获取聊天状态管理
+const { t } = useI18n() // 获取国际化函数
+const toast = useToast() // 获取toast
 
-const chatStore = useChatStore();
-
-const { t } = useI18n();
-
+ // highlight配置
 const plugins = [
   highlight("shiki", {
     themes: { light: "github-light", dark: "github-dark" },
@@ -20,13 +20,16 @@ interface ChatMessage {
   parts: Array<{ type: "text"; text: string }>;
 }
 
-const input = ref<string>("");
-const status = ref<"submitted" | "streaming" | "ready" | "error">("ready");
+const input = ref<string>("") // 输入框内容
+const status = ref<"submitted" | "streaming" | "ready" | "error">("ready") // 状态
 
 const messages = computed<ChatMessage[]>({
   get: () => chatStore.messages,
   set: (val) => chatStore.setMessages(val),
 });
+
+// RAG开关
+const ragEnabled = ref<boolean>(false)
 
 async function onSubmit() {
   const text = input.value.trim();
@@ -60,10 +63,16 @@ async function onSubmit() {
 
   let msg: ChatMessage | null = null;
 
+  // 根据RAG开关选择接口地址
+  const requestUrl = ragEnabled.value ? '/api/ai/ragstream' : '/api/ai/stream'
+
   await streamChat.chat({
+    url: requestUrl,
     messages: historyMessages,
     modelName: modelName.value,
     conversationId,
+    question: ragEnabled.value ? text : undefined,
+    topK: 3,
     onMessage: (content) => {
       if (status.value === "submitted") {
         msg = {
@@ -129,6 +138,7 @@ async function newChat() {
 const modelName = ref("");
 const modelList = ref<{ label: string; value: string; icon: string }[]>([]);
 
+// 获取模型图标
 function getModelIcon(name: string): string {
   if (name.includes("doubao")) return "i-simple-icons-bytedance";
   if (name.includes("deepseek")) return "i-simple-icons-deepseek";
@@ -138,6 +148,7 @@ function getModelIcon(name: string): string {
   return "i-lucide-cpu";
 }
 
+// 当前模型图标
 const currentModelIcon = computed(() => {
   return (
     modelList.value.find((item) => item.value === modelName.value)?.icon ||
@@ -145,6 +156,26 @@ const currentModelIcon = computed(() => {
   );
 });
 
+// RAG开关回调
+const useRAG = () => {
+  if (!ragEnabled.value) {
+    toast.add({
+      title: "RAG 启动成功！",
+      description: "后续将基于上传文件的内容进行问答！",
+      color: "success",
+      duration: 2000,
+    })
+  } else {
+    toast.add({
+      title: "已关闭知识库模式",
+      description: "现在使用普通大模型对话",
+      color: "info",
+      duration: 2000,
+    })
+  }
+}
+
+// 挂载时获取模型列表
 onMounted(async () => {
   const res = await getModelListResponse();
   if (res?.modelNames) {
@@ -165,6 +196,7 @@ onMounted(async () => {
   }
 });
 
+// 监听当前会话ID变化
 watch(
   () => chatStore.currentConversationId,
   async (newId, oldId) => {
@@ -234,7 +266,9 @@ watch(
       >
         <!-- 输入框下半部分区域 -->
         <template #footer>
-          <div>rag预留区</div>
+          <div>
+            <USwitch @click="useRAG" v-model="ragEnabled" />
+          </div>
 
           <div class="flex items-center gap-1.5">
             <USelect

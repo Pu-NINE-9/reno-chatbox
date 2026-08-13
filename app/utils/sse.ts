@@ -29,9 +29,12 @@ import { fetchEventSource } from '@microsoft/fetch-event-source'
   流式消息参数
 */
 interface StreamChatParams {
-  messages: Array<{ role: string; content: string }>
-  modelName: string
+  url: string
+  messages?: Array<{ role: string; content: string }>
+  modelName?: string
   conversationId?: number | null
+  question?: string
+  topK?: number
   onMessage: (content: string) => void
   onComplete: () => void
   onError: (error: Error) => void
@@ -49,7 +52,7 @@ class StreamChat {
     发送流式消息（核心方法）
   */
   async chat(params: StreamChatParams) {
-    const { messages, modelName, conversationId, onMessage, onComplete, onError } = params
+    const { url, messages, modelName, conversationId, question, topK, onMessage, onComplete, onError } = params
 
     this.abort()
 
@@ -58,36 +61,45 @@ class StreamChat {
 
     let fullContent = ''
 
+    // 区分普通聊天 / RAG知识库请求的请求体
+    let bodyData: Record<string, unknown>
+    if (question) {
+      // RAG知识库接口
+      bodyData = { question, topK }
+    } else {
+      // 普通AI聊天接口
+      bodyData = { messages, modelName, conversationId }
+    }
+
     try {
-      await fetchEventSource('/api/ai/stream', {
+      await fetchEventSource(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Accept: 'text/event-stream'
         },
-        body: JSON.stringify({ messages, modelName, conversationId }),
+        body: JSON.stringify(bodyData),
         signal,
         openWhenHidden: true,
 
         onopen: async (response) => {
-          if (!response.ok) {
-            throw new Error(`请求失败 ${response.status}`)
-          }
+          if (!response.ok) throw new Error(`请求失败 ${response.status}`)
         },
 
         onmessage: (event) => {
           try {
             const data = JSON.parse(event.data)
-            if (event.event === 'message' && data.content) {
-              fullContent += data.content
+            // 统一后端返回字段 chunk
+            if (data.chunk) {
+              fullContent += data.chunk
               onMessage(fullContent)
-            } else if (event.event === 'error') {
-              throw new Error(data.msg || '未知错误')
-            } else if (event.event === 'done') {
+            } else if (data.error) {
+              throw new Error(data.error || '未知错误')
+            } else if (data.done) {
               onComplete()
             }
           } catch (e) {
-            if (event.event !== 'done') {
+            if (!data?.done) {
               console.warn('SSE parse error:', e)
             }
           }

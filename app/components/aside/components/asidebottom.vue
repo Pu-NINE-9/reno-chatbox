@@ -138,7 +138,7 @@ const getContextMenuItems = (item: { id: number; filename: string }) => [
         v-model="uploadFile"
         :icon="false"
         label="RAG Knowledge Base"
-        description="Drop your file here(PDF, CSV, MD, TXT, DOCX or XLSX (max. 5MB))"
+        description="Drop your file here (PDF, CSV, MD, TXT, DOCX or XLSX (max. 5MB))"
         class="mb-3 cursor-pointer w-full h-[100px] upload-box"
         :file-delete="true"
         :ui="{

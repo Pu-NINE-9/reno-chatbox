@@ -1,37 +1,37 @@
 {
-  "hash": "0146dc11",
+  "hash": "0f593680",
   "configHash": "186cbcea",
-  "lockfileHash": "5029002f",
-  "browserHash": "a64f0034",
+  "lockfileHash": "86b85b0d",
+  "browserHash": "35db676c",
   "optimized": {
     "@microsoft/fetch-event-source": {
       "src": "../../../node_modules/.pnpm/@microsoft+fetch-event-source@2.0.1/node_modules/@microsoft/fetch-event-source/lib/esm/index.js",
       "file": "@microsoft_fetch-event-source.js",
-      "fileHash": "5abc2f26",
+      "fileHash": "7c475664",
       "needsInterop": false
     },
     "errx": {
       "src": "../../../node_modules/.pnpm/errx@0.1.2/node_modules/errx/dist/index.mjs",
       "file": "errx.js",
-      "fileHash": "a888597f",
+      "fileHash": "2dc80283",
       "needsInterop": false
     },
     "nostics": {
       "src": "../../../node_modules/.pnpm/nostics@1.2.0/node_modules/nostics/dist/index.mjs",
       "file": "nostics.js",
-      "fileHash": "64de9f52",
+      "fileHash": "7d190ee0",
       "needsInterop": false
     },
     "nostics/formatters/ansi": {
       "src": "../../../node_modules/.pnpm/nostics@1.2.0/node_modules/nostics/dist/formatters/ansi.mjs",
       "file": "nostics_formatters_ansi.js",
-      "fileHash": "c348e36f",
+      "fileHash": "64924467",
       "needsInterop": false
     },
     "nostics/reporters/dev": {
       "src": "../../../node_modules/.pnpm/nostics@1.2.0/node_modules/nostics/dist/reporters/dev.mjs",
       "file": "nostics_reporters_dev.js",
-      "fileHash": "035fc27d",
+      "fileHash": "022c3e96",
       "needsInterop": false
     }
   },
