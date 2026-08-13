@@ -27,7 +27,7 @@ const settingStore = useSettingStore()
       <UAppFooter class="h-[45px] shrink-0">
         <div class="flex items-center justify-center w-full">
           <div class="text-sm text-gray-500 dark:text-gray-400">
-            &copy; {{ new Date().getFullYear() }} Nuxt4 Practice Demo
+            &copy; {{ new Date().getFullYear() }} Reno ChatBox
           </div>
         </div>
       </UAppFooter>

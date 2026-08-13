@@ -6,7 +6,7 @@
   1. 原生 EventSource 只支持 GET
      ↓ 这个库支持 POST、PUT、DELETE
   2. 原生无法自定义请求头
-     ↓ 这个库可以加 Authorization、Content-Type
+     ↓ 这个库可以加 Authorization、Content‑Type
   3. 原生无法传 body
      ↓ 这个库可以传 JSON body
   4. 原生无法取消请求
@@ -21,7 +21,7 @@
 
   总结：
   原生 = 玩具
-  fetch-event-source = 生产级 SSE 标准
+  fetch‑event‑source = 生产级 SSE 标准
 */
 import { fetchEventSource } from '@microsoft/fetch-event-source'
 
@@ -59,13 +59,11 @@ class StreamChat {
     this.abortController = new AbortController()
     const signal = this.abortController.signal
 
-    let fullContent = ''
-
     // 区分普通聊天 / RAG知识库请求的请求体
     let bodyData: Record<string, unknown>
     if (question) {
-      // RAG知识库接口
-      bodyData = { question, topK }
+      // RAG 接口必须传递 messages，解决后端 messagesBody 不可迭代报错
+      bodyData = { question, topK, messages, conversationId }
     } else {
       // 普通AI聊天接口
       bodyData = { messages, modelName, conversationId }
@@ -89,10 +87,10 @@ class StreamChat {
         onmessage: (event) => {
           try {
             const data = JSON.parse(event.data)
-            // 统一后端返回字段 chunk
-            if (data.chunk) {
-              fullContent += data.chunk
-              onMessage(fullContent)
+            // 和后端字段 content 对齐，过滤空字符串分片
+            if (data.content && data.content.trim() !== '') {
+              // 只发送当前单块分片，前端负责拼接
+              onMessage(data.content)
             } else if (data.error) {
               throw new Error(data.error || '未知错误')
             } else if (data.done) {

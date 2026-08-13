@@ -1,19 +1,26 @@
 export const useSettingStore = defineStore('setting', () => {
-    const sidebarOpen = ref<boolean>(true)
+  const sidebarOpen = ref<boolean>(true)
+  // 暗黑模式
+  const isDark = ref<boolean>(false)
 
-    // 封装切换方法，组件统一调用
-    const toggleSidebar = () => {
-        sidebarOpen.value = !sidebarOpen.value
-        console.log('click')
-    }
-
-    return {
-      sidebarOpen,
-      toggleSidebar
-    }
-  }, {
-    persist: {
-      pick: ['sidebarOpen']
-    }
+  const toggleSidebar = () => {
+    sidebarOpen.value = !sidebarOpen.value
   }
-)
+
+  // 切换主题
+  const toggleDark = () => {
+    isDark.value = !isDark.value
+  }
+
+  return {
+    sidebarOpen,
+    toggleSidebar,
+    isDark,
+    toggleDark
+  }
+}, {
+  persist: {
+    // 持久化两个字段
+    pick: ['sidebarOpen','isDark']
+  }
+})

@@ -167,5 +167,5 @@ export async function* ragSearchStream(option: RagStreamOption): AsyncIterable<s
   })
 
   // 循环推送每一块文字
-  for await (const token of stream) yield token
+  for await (const token of stream) if (token.trim() !== '') yield token
 }

@@ -6,6 +6,10 @@ html, body, #__nuxt {
   margin: 0;
 }
 
+html {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
 @layer utilities {
   /* 滚动条宽度 */
   .scrollbar-thin {

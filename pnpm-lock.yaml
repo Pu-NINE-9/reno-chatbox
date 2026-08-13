@@ -47,6 +47,9 @@ importers:
       drizzle-orm:
         specifier: ^0.45.2
         version: 0.45.2(better-sqlite3@13.0.2)(mysql2@3.23.2(@types/node@26.1.2))
+      langchain:
+        specifier: ^1.5.6
+        version: 1.5.6(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.1)(zod@4.4.3))(ws@8.21.1))(openai@6.49.0(ws@8.21.1)(zod@4.4.3))(vue@3.5.40(typescript@5.9.3))(ws@8.21.1)
       mysql2:
         specifier: ^3.23.2
         version: 3.23.2(@types/node@26.1.2)
@@ -80,6 +83,9 @@ importers:
       vue-router:
         specifier: ^5.2.0
         version: 5.2.0(@vue/compiler-sfc@3.5.40)(esbuild@0.28.1)(pinia@4.0.2(@vue/devtools-api@8.2.1)(typescript@5.9.3)(vue@3.5.40(typescript@5.9.3)))(rolldown@1.2.1)(rollup@4.62.3)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0))(vue@3.5.40(typescript@5.9.3))
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
     devDependencies:
       '@eslint/js':
         specifier: ^10.0.1
@@ -1592,11 +1598,45 @@ packages:
     resolution: {integrity: sha512-4lXj3fTPQYGdEtOG9gWDnvmp6wpXNMo9MmWzfZxxPUxMcjulZJa93pYAZ90luFLg2YVdVuUl2tuwdD7tY5K9MA==}
     engines: {node: '>=20'}
 
+  '@langchain/langgraph-checkpoint@1.1.3':
+    resolution: {integrity: sha512-wgzdQNeEsdw1e+4lvlj0tdq/RYR/k1vPin10g0ymGoehZDDgd9nvIllGXSXN4TFgF9sf5qQP/KTkOcLfeseIhA==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@langchain/core': 1.2.5
+
+  '@langchain/langgraph-sdk@1.9.29':
+    resolution: {integrity: sha512-W+ccugM5EzBHvaOieyYxlSbhAy6HWF8Tyn6b/BlTWuFd8xtcnQOz2WuFyofcAc9+aQHE+6yHJfIywGOvjxS+bA==}
+    peerDependencies:
+      '@langchain/core': 1.2.5
+      react: ^18 || ^19
+      react-dom: ^18 || ^19
+      svelte: ^4.0.0 || ^5.0.0
+      vue: ^3.0.0
+    peerDependenciesMeta:
+      react:
+        optional: true
+      react-dom:
+        optional: true
+      svelte:
+        optional: true
+      vue:
+        optional: true
+
+  '@langchain/langgraph@1.4.9':
+    resolution: {integrity: sha512-EvD9rS66Cya09y6rbMgD3Ir8miAkJQFo7FyJOPRPO736Kz3y5TeyeBDOS8ctff/jRc788bPijHx2NVFM79Qqig==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@langchain/core': 1.2.5
+      zod: ^3.25.32 || ^4.2.0
+
   '@langchain/openai@1.5.6':
     resolution: {integrity: sha512-1cesvhCXw30tMYWXXQaK2gN4aDIKq266LcMSjZn7O/kue/vPnCOAxiwy54HcGQQf7m/sVKfhOn4QwVRObSeAsg==}
     engines: {node: '>=20'}
     peerDependencies:
       '@langchain/core': 1.2.5
+
+  '@langchain/protocol@0.0.18':
+    resolution: {integrity: sha512-XW1egQtPfsGI41w2AMZNFZrUIwFSQHTjVMZs0OaTpCAvht/QLoaPN8FQcsysMVypOhupG28J29yOorrc70otBQ==}
 
   '@langchain/textsplitters@1.0.1':
     resolution: {integrity: sha512-rheJlB01iVtrOUzttscutRgLybPH9qR79EyzBEbf1u97ljWyuxQfCwIWK+SjoQTM9O8M7GGLLRBSYE26Jmcoww==}
@@ -4343,6 +4383,9 @@ packages:
   eventemitter3@4.0.7:
     resolution: {integrity: sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==}
 
+  eventemitter3@5.0.4:
+    resolution: {integrity: sha512-mlsTRyGaPBjPedk6Bvw+aqbsXDtoAyAzm5MO7JgU+yVRyMQ5O8bD4Kcci7BS85f93veegeCPkL8R4GLClnjLFw==}
+
   events-universal@1.0.1:
     resolution: {integrity: sha512-LUd5euvbMLpwOF8m6ivPCbhQeSiYVNb8Vs0fQ8QjXo0JTkEHpz8pxdQf0gStltaPpw0Cca8b39KxvK9cfKRiAw==}
 
@@ -4772,6 +4815,10 @@ packages:
   is-module@1.0.0:
     resolution: {integrity: sha512-51ypPSPCoTEIN9dy5Oy+h4pShgJmPCygKfyRCISBI+JoWT/2oJvK8QPxmwv7b/p239jXrm9M1mlQbyKJ5A152g==}
 
+  is-network-error@1.3.2:
+    resolution: {integrity: sha512-PhBY86zaxNZUuWP6h13Vu5oFe0XY6/UlKzQnYFELzGVHygP3MxmvTfYSG7GN3aIab/iWudSMgjSnG9Dq+nHrgA==}
+    engines: {node: '>=16'}
+
   is-number@7.0.0:
     resolution: {integrity: sha512-41Cifkg6e8TylSpdtTpeLVMqvSBEVzTttHvERD741+pnZ8ANv0004MRL43QKPDlK9cGvNp6NZWZUBlbGXYxxng==}
     engines: {node: '>=0.12.0'}
@@ -4895,6 +4942,12 @@ packages:
 
   knitwork@1.3.0:
     resolution: {integrity: sha512-4LqMNoONzR43B1W0ek0fhXMsDNW/zxa1NdFAVMY+k28pgZLovR4G3PB5MrpTxCy1QaZCqNoiaKPr5w5qZHfSNw==}
+
+  langchain@1.5.6:
+    resolution: {integrity: sha512-QJhvXn6a9OKK2kwQBBHbOSh/uAPwqoYa78enkCcn/78cJEfHJTQD9xFmtxSY1DFZ36LH5dz+vrjT0OsU3pO3mw==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      '@langchain/core': 1.2.5
 
   langsmith@0.8.9:
     resolution: {integrity: sha512-6ikTB5SO+3SlBQ/+oH8K/JzhglxB8AM4RAe5bHzgWSEIHTgTe+b71bSjf1fDvlYuEXoiPn6uP10BbczrbznUnA==}
@@ -5544,9 +5597,21 @@ packages:
     resolution: {integrity: sha512-RwFpb72c/BhQLEXIZ5K2e+AhgNVmIejGlTgiB9MzZ0e93GRvqZ7uSi0dvRF7/XIXDeNkra2fNHBxTyPDGySpjQ==}
     engines: {node: '>=8'}
 
+  p-queue@9.3.3:
+    resolution: {integrity: sha512-NXAOdnEe5FsZJfT4oK84lE1Y5cFFdWlRuOo5tww8DyNMxyRXwn39fIkUtNLKppcPC+UYU/bXujNCUGDv01y7CA==}
+    engines: {node: '>=20'}
+
+  p-retry@7.1.1:
+    resolution: {integrity: sha512-J5ApzjyRkkf601HpEeykoiCvzHQjWxPAHhyjFcEUP2SWq0+35NKh8TLhpLw+Dkq5TZBFvUM6UigdE9hIVYTl5w==}
+    engines: {node: '>=20'}
+
   p-timeout@3.2.0:
     resolution: {integrity: sha512-rhIwUycgwwKcP9yTOOFK/AKsAopjjCakVqLHePO3CC6Mir1Z99xT+R63jZxAT5lFZLa2inS5h+ZS2GvR99/FBg==}
     engines: {node: '>=8'}
+
+  p-timeout@7.0.1:
+    resolution: {integrity: sha512-AxTM2wDGORHGEkPCt8yqxOTMgpfbEHqF51f/5fJCmwFC3C/zNcGT63SymH2ttOAaiIws2zVg4+izQCjrakcwHg==}
+    engines: {node: '>=20'}
 
   package-json-from-dist@1.0.1:
     resolution: {integrity: sha512-UEZIS3/by4OC8vL3P2dTXRETpebLI2NiI5vIrjaD/5UtrkFX/tNbwjTSRAGC/+7CAo2pIcBaRgWmcBBHcsaCIw==}
@@ -8025,6 +8090,34 @@ snapshots:
       - openai
       - ws
 
+  '@langchain/langgraph-checkpoint@1.1.3(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.1)(zod@4.4.3))(ws@8.21.1))':
+    dependencies:
+      '@langchain/core': 1.2.5(openai@6.49.0(ws@8.21.1)(zod@4.4.3))(ws@8.21.1)
+
+  '@langchain/langgraph-sdk@1.9.29(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.1)(zod@4.4.3))(ws@8.21.1))(vue@3.5.40(typescript@5.9.3))':
+    dependencies:
+      '@langchain/core': 1.2.5(openai@6.49.0(ws@8.21.1)(zod@4.4.3))(ws@8.21.1)
+      '@langchain/protocol': 0.0.18
+      '@types/json-schema': 7.0.15
+      p-queue: 9.3.3
+      p-retry: 7.1.1
+    optionalDependencies:
+      vue: 3.5.40(typescript@5.9.3)
+
+  '@langchain/langgraph@1.4.9(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.1)(zod@4.4.3))(ws@8.21.1))(vue@3.5.40(typescript@5.9.3))(zod@4.4.3)':
+    dependencies:
+      '@langchain/core': 1.2.5(openai@6.49.0(ws@8.21.1)(zod@4.4.3))(ws@8.21.1)
+      '@langchain/langgraph-checkpoint': 1.1.3(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.1)(zod@4.4.3))(ws@8.21.1))
+      '@langchain/langgraph-sdk': 1.9.29(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.1)(zod@4.4.3))(ws@8.21.1))(vue@3.5.40(typescript@5.9.3))
+      '@langchain/protocol': 0.0.18
+      '@standard-schema/spec': 1.1.0
+      zod: 4.4.3
+    transitivePeerDependencies:
+      - react
+      - react-dom
+      - svelte
+      - vue
+
   '@langchain/openai@1.5.6(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.1)(zod@4.4.3))(ws@8.21.1))(ws@8.21.1)':
     dependencies:
       '@langchain/core': 1.2.5(openai@6.49.0(ws@8.21.1)(zod@4.4.3))(ws@8.21.1)
@@ -8036,6 +8129,8 @@ snapshots:
       - '@smithy/hash-node'
       - '@smithy/signature-v4'
       - ws
+
+  '@langchain/protocol@0.0.18': {}
 
   '@langchain/textsplitters@1.0.1(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.1)(zod@4.4.3))(ws@8.21.1))':
     dependencies:
@@ -10983,6 +11078,8 @@ snapshots:
 
   eventemitter3@4.0.7: {}
 
+  eventemitter3@5.0.4: {}
+
   events-universal@1.0.1:
     dependencies:
       bare-events: 2.9.1
@@ -11479,6 +11576,8 @@ snapshots:
 
   is-module@1.0.0: {}
 
+  is-network-error@1.3.2: {}
+
   is-number@7.0.0: {}
 
   is-path-inside@4.0.0: {}
@@ -11587,6 +11686,24 @@ snapshots:
   klona@2.0.6: {}
 
   knitwork@1.3.0: {}
+
+  langchain@1.5.6(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.1)(zod@4.4.3))(ws@8.21.1))(openai@6.49.0(ws@8.21.1)(zod@4.4.3))(vue@3.5.40(typescript@5.9.3))(ws@8.21.1):
+    dependencies:
+      '@langchain/core': 1.2.5(openai@6.49.0(ws@8.21.1)(zod@4.4.3))(ws@8.21.1)
+      '@langchain/langgraph': 1.4.9(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.1)(zod@4.4.3))(ws@8.21.1))(vue@3.5.40(typescript@5.9.3))(zod@4.4.3)
+      '@langchain/langgraph-checkpoint': 1.1.3(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.1)(zod@4.4.3))(ws@8.21.1))
+      langsmith: 0.8.9(openai@6.49.0(ws@8.21.1)(zod@4.4.3))(ws@8.21.1)
+      zod: 4.4.3
+    transitivePeerDependencies:
+      - '@opentelemetry/api'
+      - '@opentelemetry/exporter-trace-otlp-proto'
+      - '@opentelemetry/sdk-trace-base'
+      - openai
+      - react
+      - react-dom
+      - svelte
+      - vue
+      - ws
 
   langsmith@0.8.9(openai@6.49.0(ws@8.21.1)(zod@4.4.3))(ws@8.21.1):
     dependencies:
@@ -12458,9 +12575,20 @@ snapshots:
       eventemitter3: 4.0.7
       p-timeout: 3.2.0
 
+  p-queue@9.3.3:
+    dependencies:
+      eventemitter3: 5.0.4
+      p-timeout: 7.0.1
+
+  p-retry@7.1.1:
+    dependencies:
+      is-network-error: 1.3.2
+
   p-timeout@3.2.0:
     dependencies:
       p-finally: 1.0.0
+
+  p-timeout@7.0.1: {}
 
   package-json-from-dist@1.0.1: {}
 

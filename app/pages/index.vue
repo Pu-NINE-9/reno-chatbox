@@ -74,6 +74,9 @@ async function onSubmit() {
     question: ragEnabled.value ? text : undefined,
     topK: 3,
     onMessage: (content) => {
+      // 拦截空分片，防止末尾 done 的空字符串清空文本
+      if (!content) return
+
       if (status.value === "submitted") {
         msg = {
           id: assistantId,
@@ -84,7 +87,8 @@ async function onSubmit() {
         status.value = "streaming";
         chatStore.streaming = true;
       } else if (msg && msg.parts[0]) {
-        msg.parts[0].text = content;
+        // 关键修复：+= 向后追加文字，不再直接覆盖
+        msg.parts[0].text += content;
       }
     },
     onComplete: () => {
@@ -267,7 +271,7 @@ watch(
         <!-- 输入框下半部分区域 -->
         <template #footer>
           <div>
-            <USwitch @click="useRAG" v-model="ragEnabled" />
+            <USwitch @click="useRAG" v-model="ragEnabled" label="启动 RAG" />
           </div>
 
           <div class="flex items-center gap-1.5">

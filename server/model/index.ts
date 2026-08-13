@@ -1,11 +1,11 @@
 import { ChatOpenAI } from '@langchain/openai'
-import { StringOutputParser } from '@langchain/core/output_parsers'
+import { createAgent } from 'langchain' // 导入agent相关API
 import type { BaseMessage } from '@langchain/core/messages'
 import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages'
+// 导入你写好的时间工具
+import { getCurrentTime, webSearch } from "./tools"
 
 const config = useRuntimeConfig()
-
-const parser = new StringOutputParser()
 
 function createModel(modelName: string) {
   console.log('[Model] 创建实例 → modelName:', modelName, 'baseURL:', config.ai.baseURL)
@@ -34,23 +34,41 @@ function buildMessages(messages: Array<{ role: string; content: string }>): Base
   return langchainMessages
 }
 
+// 注册所有可用工具
+const tools = [getCurrentTime, webSearch]
+
+/**
+ * 同步对话入口
+ * createAgent：LangChain‑JS v1 全新顶层Agent，替代废弃的 AgentExecutor
+ */
 export async function invokeChat(messages: Array<{ role: string; content: string }>, modelName: string) {
   const model = createModel(modelName)
-  const langchainMessages = buildMessages(messages)
-  const chain = model.pipe(parser)
-  const response = await chain.invoke(langchainMessages)
-  return response
+
+  // 创建智能代理，自动处理：思考 → 调用工具 → 带回结果 → 生成回答
+  const agent = createAgent({
+    model,
+    tools,
+    systemPrompt: config.ai.systemPromptText
+  })
+
+  const history = buildMessages(messages)
+  // 执行agent
+  const res = await agent.invoke({
+    messages: history
+  })
+
+  // 返回最终AI输出文本
+  return res.messages.at(-1)?.content
 }
 
+/**
+ * 流式函数，函数名依旧为 streamChat，后端SSE接口无需修改
+ * Agent完整走完工具调用流程后，再分片向前端输出文字
+ */
 export async function* streamChat(messages: Array<{ role: string; content: string }>, modelName: string) {
-  const model = createModel(modelName)
-  const langchainMessages = buildMessages(messages)
-  const chain = model.pipe(parser)
-  const stream = await chain.stream(langchainMessages)
+  const finalText = await invokeChat(messages, modelName)
+  if (!finalText) return
 
-  for await (const chunk of stream) {
-    if (chunk) {
-      yield chunk
-    }
-  }
+  // 逐字符流式返回
+  for (const char of finalText) if (char !== "") yield char
 }
